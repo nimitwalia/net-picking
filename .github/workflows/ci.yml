@@ -1,0 +1,31 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for a Node project
+        id: proj
+        run: |
+          if [ -f package.json ]; then echo "has=true" >> "$GITHUB_OUTPUT"; else echo "has=false" >> "$GITHUB_OUTPUT"; echo "No package.json yet; skipping."; fi
+      - uses: pnpm/action-setup@v4
+        if: steps.proj.outputs.has == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.proj.outputs.has == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+      - if: steps.proj.outputs.has == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.proj.outputs.has == 'true'
+        run: pnpm -r --if-present lint
+      - if: steps.proj.outputs.has == 'true'
+        run: pnpm -r test
+      - if: steps.proj.outputs.has == 'true'
+        run: pnpm -r --if-present build

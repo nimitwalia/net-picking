@@ -7,10 +7,14 @@
 - [ ] Port free UI to apps/free using core, no behaviour change
 - [ ] GitHub Actions: test on PR, deploy apps/free to Pages
 
+## Phase 0b: follow-up
+- [ ] Seeded/injectable RNG and clock in the scheduler; property tests with fixed seeds for no-repeat-partners and no-back-to-back; differential tests for checkScore and standings against the original index.html logic
+
 ## Phase 1: free v1
 - [ ] JSON export/import + undo last score
-- [ ] Byes / any player count, rank by points per match when counts differ
+- [ ] Optional byes (default off) and per-match ranking when byes are on. See docs/specs/byes-and-ranking.md
 - [ ] Courts: floor(N/4) offered, optional court names, rounds view with resting players
+- [ ] Player withdrawal and skip-next-match with undo. See docs/specs/withdrawal.md (depends on seeded RNG, byes, undo)
 - [ ] Mobile QA on iOS Safari and Android Chrome
 
 ## Phase 2: pro (private repo)

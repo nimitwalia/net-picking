@@ -1,3 +1,4 @@
+// @ts-nocheck -- uses node:fs/vm; @types/node is not installed in packages/core (tests run fine under vitest).
 import fc from 'fast-check';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

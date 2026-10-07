@@ -17,6 +17,6 @@ The live free app is `index.html` at the repo root, served by GitHub Pages from 
 
 ## Core behaviour that must not regress
 - Valid matches-per-player: N*m divisible by 4 (unless byes enabled) and m <= N-1.
-- Scheduler avoids repeated partners, repeated opponents, back-to-back matches, in that priority.
+- Scheduler avoids repeated partners first, then back-to-back matches, then repeated opponents, in that priority (cost weights 20, 15, 3).
 - Win +3 / loss -1 per player. Scores must follow win-by-2 against the chosen points-to-play.
 - Courts offered = floor(players/4).

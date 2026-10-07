@@ -1,11 +1,10 @@
-// @ts-nocheck -- uses node:fs/vm; @types/node is not installed in packages/core (tests run fine under vitest).
 import fc from 'fast-check';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import vm from 'node:vm';
 import { describe, expect, it } from 'vitest';
-import { checkScore, standings, tieAtCutoff } from './index';
+import { checkScore, standings, tieAtCutoff, type PlayedMatch } from './index';
 
 // Extract the original functions from index.html (read only) by brace-matching their source text.
 const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../index.html'), 'utf8');
@@ -83,7 +82,7 @@ describe('differential: core vs original index.html', () => {
         ),
         ({ ms, names, upTo }) => {
           const ref = origStandings(names, JSON.parse(JSON.stringify(ms)), upTo);
-          const got = standings(names, ms, upTo);
+          const got = standings(names, ms as PlayedMatch[], upTo);
           expect(got).toEqual(ref);
           sandbox.rows = ref;
           expect(tieAtCutoff(got)).toBe(vm.runInContext('tieAtCutoff(rows)', sandbox));

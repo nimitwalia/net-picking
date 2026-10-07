@@ -56,11 +56,15 @@ export function nCk(n: number, k: number): number {
   return Math.round(r);
 }
 
-export function candidateCombos(pool: readonly number[], k: number): number[][] {
+export function candidateCombos(
+  pool: readonly number[],
+  k: number,
+  random: RandomFn = Math.random,
+): number[][] {
   if (k === 0) return [[]];
   if (nCk(pool.length, k) <= 500) return combosOf(pool, k);
   const out: number[][] = [];
-  for (let i = 0; i < 500; i++) out.push(shuffle(pool).slice(0, k));
+  for (let i = 0; i < 500; i++) out.push(shuffle(pool, random).slice(0, k));
   return out;
 }
 
@@ -101,7 +105,7 @@ export function trySchedule(
     if (pool.length < need) return null;
     let best: Split | null = null;
     let bestCost = Infinity;
-    for (const c of candidateCombos(pool, need)) {
+    for (const c of candidateCombos(pool, need, random)) {
       const four = forced.concat(c) as Four;
       let base = 0;
       for (const p of four) {

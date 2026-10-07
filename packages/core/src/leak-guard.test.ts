@@ -8,20 +8,20 @@ describe('scheduler does not leak to global Math.random / Date.now', { timeout: 
     vi.restoreAllMocks();
   });
 
-  it('N = 4..20, several valid m each', () => {
-    const origRandom = Math.random;
-    const origNow = Date.now;
-    let leaks = 0;
-    try {
-      Math.random = () => {
-        leaks++;
-        throw new Error('global Math.random used');
-      };
-      Date.now = () => {
-        leaks++;
-        throw new Error('global Date.now used');
-      };
-      for (let N = 4; N <= 20; N++) {
+  for (let N = 4; N <= 20; N++) {
+    it(`N = ${N}, several valid m`, () => {
+      const origRandom = Math.random;
+      const origNow = Date.now;
+      let leaks = 0;
+      try {
+        Math.random = () => {
+          leaks++;
+          throw new Error('global Math.random used');
+        };
+        Date.now = () => {
+          leaks++;
+          throw new Error('global Date.now used');
+        };
         const ms = validMatchCounts(N);
         const picks = [...new Set([ms[0]!, ms[Math.floor(ms.length / 2)]!, ms[ms.length - 1]!])].filter(
           (m) => m <= 4 || N <= 8,
@@ -32,11 +32,11 @@ describe('scheduler does not leak to global Math.random / Date.now', { timeout: 
           expect(s, `N=${N} m=${m}`).not.toBeNull();
           expect(s!.matches).toHaveLength((N * m) / 4);
         }
+      } finally {
+        Math.random = origRandom;
+        Date.now = origNow;
       }
-    } finally {
-      Math.random = origRandom;
-      Date.now = origNow;
-    }
-    expect(leaks).toBe(0);
-  });
+      expect(leaks).toBe(0);
+    });
+  }
 });

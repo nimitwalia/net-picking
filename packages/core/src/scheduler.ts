@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 /* Scheduler, ported from index.html (SCHED_START..SCHED_END). Behaviour preserved. */
 
 import type { RandomFn, SchedulerDeps } from './random';

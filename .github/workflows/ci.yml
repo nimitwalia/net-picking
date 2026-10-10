@@ -26,6 +26,8 @@ jobs:
       - if: steps.proj.outputs.has == 'true'
         run: pnpm -r --if-present lint
       - if: steps.proj.outputs.has == 'true'
+        run: pnpm -r typecheck
+      - if: steps.proj.outputs.has == 'true'
         run: pnpm -r test
       - if: steps.proj.outputs.has == 'true'
         run: pnpm -r --if-present build

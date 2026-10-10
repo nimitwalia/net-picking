@@ -1,5 +1,6 @@
 /* Scheduler, ported from index.html (SCHED_START..SCHED_END). Behaviour preserved. */
 
+import type { RandomFn, SchedulerDeps } from './random';
 export type Pair = [number, number];
 export interface Match {
   t1: Pair;
@@ -18,10 +19,10 @@ export interface Schedule {
 type Four = [number, number, number, number];
 type Split = [Pair, Pair];
 
-export function shuffle<T>(a: readonly T[]): T[] {
+export function shuffle<T>(a: readonly T[], random: RandomFn = Math.random): T[] {
   const r = a.slice();
   for (let i = r.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [r[i], r[j]] = [r[j] as T, r[i] as T];
   }
   return r;
@@ -55,11 +56,15 @@ export function nCk(n: number, k: number): number {
   return Math.round(r);
 }
 
-export function candidateCombos(pool: readonly number[], k: number): number[][] {
+export function candidateCombos(
+  pool: readonly number[],
+  k: number,
+  random: RandomFn = Math.random,
+): number[][] {
   if (k === 0) return [[]];
   if (nCk(pool.length, k) <= 500) return combosOf(pool, k);
   const out: number[][] = [];
-  for (let i = 0; i < 500; i++) out.push(shuffle(pool).slice(0, k));
+  for (let i = 0; i < 500; i++) out.push(shuffle(pool, random).slice(0, k));
   return out;
 }
 
@@ -72,7 +77,12 @@ export function splitsOf(f: Four): Split[] {
 }
 
 /** One randomised greedy attempt. Returns null if it paints itself into a corner. */
-export function trySchedule(N: number, m: number, total: number): Match[] | null {
+export function trySchedule(
+  N: number,
+  m: number,
+  total: number,
+  random: RandomFn = Math.random,
+): Match[] | null {
   const rem: number[] = Array(N).fill(m);
   const last: number[] = Array(N).fill(-10);
   const partner = new Map<number, number>();
@@ -95,7 +105,7 @@ export function trySchedule(N: number, m: number, total: number): Match[] | null
     if (pool.length < need) return null;
     let best: Split | null = null;
     let bestCost = Infinity;
-    for (const c of candidateCombos(pool, need)) {
+    for (const c of candidateCombos(pool, need, random)) {
       const four = forced.concat(c) as Four;
       let base = 0;
       for (const p of four) {
@@ -108,7 +118,7 @@ export function trySchedule(N: number, m: number, total: number): Match[] | null
         let sc = base;
         sc += get(partner, pk(a, b)) * 20 + get(partner, pk(c1, d)) * 20;
         for (const x of [a, b]) for (const y of [c1, d]) sc += get(opp, pk(x, y)) * 3;
-        sc += Math.random() * 0.7;
+        sc += random() * 0.7;
         if (sc < bestCost) {
           bestCost = sc;
           best = sp;
@@ -166,13 +176,20 @@ export function evaluate(matches: readonly Match[]): ScheduleStats {
 }
 
 /** Best of up to 800 random attempts, stopping early at cost 0 or after timeMs (default 1500). */
-export function buildSchedule(N: number, m: number, timeMs?: number): Schedule | null {
+export function buildSchedule(
+  N: number,
+  m: number,
+  timeMs?: number,
+  deps: SchedulerDeps = {},
+): Schedule | null {
+  const random = deps.random ?? Math.random;
+  const now = deps.now ?? Date.now;
   const total = (N * m) / 4;
-  const t0 = Date.now();
+  const t0 = now();
   let best: Match[] | null = null;
   let bestEval: ScheduleStats | null = null;
   for (let att = 0; att < 800; att++) {
-    const r = trySchedule(N, m, total);
+    const r = trySchedule(N, m, total, random);
     if (r) {
       const ev = evaluate(r);
       if (!best || !bestEval || ev.cost < bestEval.cost) {
@@ -181,7 +198,7 @@ export function buildSchedule(N: number, m: number, timeMs?: number): Schedule |
       }
       if (ev.cost === 0) break;
     }
-    if (Date.now() - t0 > (timeMs || 1500) && best) break;
+    if (now() - t0 > (timeMs || 1500) && best) break;
   }
   return best && bestEval ? { matches: best, stats: bestEval } : null;
 }

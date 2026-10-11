@@ -3,3 +3,6 @@ dist/
 .env
 .env.*
 .DS_Store
+
+# Third-party copyrighted material (USA Pickleball rulebook): never commit. See docs/RULES_SOURCES.md
+*.pdf

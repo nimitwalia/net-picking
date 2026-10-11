@@ -1,21 +1,9 @@
-import { buildSchedule, validMatchCounts } from '@net-picking/core';
+import { buildSchedule, validMatchCounts, checkScore, standings as coreStandings, tieAtCutoff } from '@net-picking/core';
 /* ============ SCHEDULER: now in @net-picking/core ============ */
 
 /* ============ SCORING RULES ============ */
 const MODES={side:'Service points',rally:'Rally scoring'};
 const ruleText=r=>`${MODES[r.mode]} · to ${r.to} · win by 2`;
-// A game ends when a side has reached the target AND leads by 2. Nothing else is a final score.
-function checkScore(a,b,to){
-  if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0)return 'Enter both scores as whole numbers.';
-  const rule=`This game is to ${to}, win by 2.`;
-  if(a===b)return `${rule} ${a}–${b} is a tie, so play on.`;
-  const hi=Math.max(a,b),lo=Math.min(a,b);
-  if(hi<to)return `${rule} The winning side needs at least ${to}.`;
-  if(hi===to&&lo>to-2)return `${rule} ${hi}–${lo} is not final: play on until one side leads by 2.`;
-  if(hi>to&&hi-lo<2)return `${rule} ${hi}–${lo} is not final: play on until one side leads by 2.`;
-  if(hi>to&&hi-lo>2)return `${rule} Past ${to} the game only continues from ${to-1}–${to-1} and ends once a side leads by 2. The closest valid score is ${Math.max(to,lo+2)}–${lo}.`;
-  return null;
-}
 
 /* ============ STATE ============ */
 // PREVIEW: separate storage key from the live app
@@ -49,24 +37,7 @@ const doneCount=()=>S.matches.filter(m=>m.winner).length;
 const rec=id=>id==='f'?S.finals:S.matches[+id.slice(1)];
 
 /* ============ STANDINGS ============ */
-function standings(upTo){
-  const rows=S.players.map(n=>({name:n,p:0,w:0,l:0,pts:0,diff:0,pf:0}));
-  S.matches.forEach((m,i)=>{
-    if(i>=upTo||!m.winner)return;
-    const win=m.winner===1?m.t1:m.t2,lose=m.winner===1?m.t2:m.t1;
-    const hasSc=Number.isFinite(m.s1)&&Number.isFinite(m.s2);
-    const ws=hasSc?(m.winner===1?m.s1:m.s2):0,ls=hasSc?(m.winner===1?m.s2:m.s1):0,d=ws-ls;
-    win.forEach(p=>{const r=rows[p];r.p++;r.w++;r.pts+=3;r.diff+=d;r.pf+=ws;});
-    lose.forEach(p=>{const r=rows[p];r.p++;r.l++;r.pts-=1;r.diff-=d;r.pf+=ls;});
-  });
-  rows.sort((a,b)=>b.pts-a.pts||b.w-a.w||b.diff-a.diff||b.pf-a.pf||a.name.localeCompare(b.name));
-  return rows;
-}
-function tieAtCutoff(rows){
-  if(rows.length<5)return false;
-  const a=rows[3],b=rows[4];
-  return a.pts===b.pts&&a.w===b.w&&a.diff===b.diff&&a.pf===b.pf;
-}
+function standings(upTo){return coreStandings(S.players,S.matches,upTo);}
 
 /* ============ RENDER ============ */
 function render(){

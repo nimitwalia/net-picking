@@ -1,4 +1,4 @@
-import { buildSchedule, validMatchCounts, checkScore, standings as coreStandings, tieAtCutoff } from '@net-picking/core';
+import { buildSchedule, validMatchCounts, checkScore, standings as coreStandings, tieAtCutoff, finalFour as coreFinalFour, pickTeams, resolveFinalTeams } from '@net-picking/core';
 /* ============ SCHEDULER: now in @net-picking/core ============ */
 
 /* ============ SCORING RULES ============ */
@@ -190,20 +190,9 @@ function viewBoard(){
 const CUP='<svg class="cup" viewBox="0 0 54 54" aria-hidden="true"><path d="M15 8h24v12a12 12 0 0 1-24 0V8z" fill="#1a1814"/><path d="M15 12H8c0 8 3 12 8 13M39 12h7c0 8-3 12-8 13" fill="none" stroke="#1a1814" stroke-width="3" stroke-linecap="round"/><rect x="24" y="31" width="6" height="8" fill="#1a1814"/><rect x="17" y="39" width="20" height="6" rx="2" fill="#1a1814"/></svg>';
 const canShare=()=>!!(navigator.share&&navigator.canShare);
 
-function finalTeams(){const f=S.finals;if(f.teams)return {A:f.teams.A,B:f.teams.B};const q=f.seeds;return {A:[q[0],q[3]],B:[q[1],q[2]]};}
+function finalTeams(){return resolveFinalTeams(S.finals);}
 // Top four on the leaderboard (4th and 5th can be swapped by hand when they are level on everything).
-function finalFour(rows){const four=rows.slice(0,4);if(S.tieSwap&&tieAtCutoff(rows))four[3]=rows[4];return four;}
-// Split the four into two sides with the closest leaderboard strength. Tried: 1&4 v 2&3, 1&3 v 2&4, 1&2 v 3&4.
-function pickTeams(four){
-  const st=r=>r.pts+r.diff*0.001;
-  const opts=[[[0,3],[1,2]],[[0,2],[1,3]],[[0,1],[2,3]]];
-  let best=null;
-  for(const [a,b] of opts){
-    const sa=a.reduce((t,i)=>t+st(four[i]),0),sb=b.reduce((t,i)=>t+st(four[i]),0),d=Math.abs(sa-sb);
-    if(!best||d<best.d-1e-9)best={a,b,d};
-  }
-  return {A:best.a.map(i=>four[i]),B:best.b.map(i=>four[i])};
-}
+function finalFour(rows){return coreFinalFour(rows,S.tieSwap);}
 
 function viewFinals(){
   if(!allDone()){

@@ -1,0 +1,97 @@
+{
+ "tab": "board",
+ "playersText": "Asha\nBen\nChitra\nDev\nEsha",
+ "m": 4,
+ "players": [
+  "Asha",
+  "Ben",
+  "Chitra",
+  "Dev",
+  "Esha"
+ ],
+ "matches": [
+  {
+   "t1": [
+    0,
+    1
+   ],
+   "t2": [
+    2,
+    3
+   ],
+   "winner": 1,
+   "s1": 15,
+   "s2": 9
+  },
+  {
+   "t1": [
+    0,
+    2
+   ],
+   "t2": [
+    1,
+    4
+   ],
+   "winner": 2,
+   "s1": 13,
+   "s2": 15
+  },
+  {
+   "t1": [
+    0,
+    3
+   ],
+   "t2": [
+    2,
+    4
+   ],
+   "winner": 1,
+   "s1": 16,
+   "s2": 14
+  },
+  {
+   "t1": [
+    1,
+    2
+   ],
+   "t2": [
+    3,
+    4
+   ],
+   "winner": null,
+   "s1": null,
+   "s2": null
+  },
+  {
+   "t1": [
+    0,
+    4
+   ],
+   "t2": [
+    1,
+    3
+   ],
+   "winner": null,
+   "s1": null,
+   "s2": null
+  }
+ ],
+ "stats": {
+  "partnerRepeats": 0,
+  "oppRepeats": 2,
+  "backToBack": 3,
+  "cost": 51
+ },
+ "finals": null,
+ "lbAt": 2,
+ "cfg": {
+  "mode": "rally",
+  "to": 15
+ },
+ "rules": {
+  "mode": "rally",
+  "to": 15
+ },
+ "fcfg": null,
+ "tieSwap": false
+}

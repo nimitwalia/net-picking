@@ -12,6 +12,10 @@ const swPath = process.env.SW_UNDER_TEST ?? resolve(free, 'public/sw.js');
 const PREFIX = 'net-picking-next-';
 const LIVE = 'net-picking-v1';
 
+// S5 renames the cache from net-picking-next-v1 to net-picking-next-v2 (asserted in sw-s5.test.ts). This file is
+// written to pass both before and after S5, so it asks the worker which own cache it uses.
+const OWN = /^net-picking-next-v\d+$/;
+
 async function runSw(initial: string[]) {
   const store = new Map<string, Map<string, unknown>>(initial.map((n) => [n, new Map()]));
   const opened: string[] = [];
@@ -39,7 +43,7 @@ async function runSw(initial: string[]) {
   };
   await fire('install');
   await fire('activate');
-  return { names: [...store.keys()], opened };
+  return { names: [...store.keys()], opened, current: opened.find((n) => OWN.test(n)) as string };
 }
 
 describe('sw.js behaviour (stubbed ServiceWorker + fake CacheStorage)', () => {
@@ -50,20 +54,22 @@ describe('sw.js behaviour (stubbed ServiceWorker + fake CacheStorage)', () => {
       expect(n).not.toBe(LIVE);
       expect(n.startsWith(PREFIX)).toBe(true);
     }
-    expect(opened).toContain('net-picking-next-v1');
+    expect(opened.some((n) => OWN.test(n)), 'opens a net-picking-next-v<N> cache').toBe(true);
   });
 
   it('activate keeps live, foreign and current caches; deletes only old own caches', async () => {
-    const { names } = await runSw([LIVE, 'some-other-cache', 'net-picking-next-v0', 'net-picking-next-v1']);
+    const { current } = await runSw([]);
+    const older = ['net-picking-next-v0', current === 'net-picking-next-v1' ? 'net-picking-next-v-1' : 'net-picking-next-v1'];
+    const { names } = await runSw([LIVE, 'some-other-cache', ...older, current]);
     expect(names).toContain(LIVE);
     expect(names).toContain('some-other-cache');
-    expect(names).toContain('net-picking-next-v1');
-    expect(names).not.toContain('net-picking-next-v0');
+    expect(names).toContain(current);
+    for (const o of older) expect(names, o).not.toContain(o);
   });
 
   it('never deletes anything it does not own', async () => {
     const foreign = [LIVE, 'some-other-cache', 'workbox-precache', 'net-picking-v2', 'net-picking-nextish'];
-    const { names } = await runSw([...foreign, 'net-picking-next-v1']);
+    const { names } = await runSw([...foreign, 'net-picking-next-v1', 'net-picking-next-v2']);
     for (const f of foreign) expect(names, f).toContain(f);
   });
 });

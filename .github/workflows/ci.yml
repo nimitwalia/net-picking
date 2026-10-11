@@ -24,6 +24,8 @@ jobs:
       - if: steps.proj.outputs.has == 'true'
         run: pnpm install --frozen-lockfile
       - if: steps.proj.outputs.has == 'true'
+        run: pnpm --filter @net-picking/free exec playwright install --with-deps chromium
+      - if: steps.proj.outputs.has == 'true'
         run: pnpm -r --if-present lint
       - if: steps.proj.outputs.has == 'true'
         run: pnpm -r typecheck

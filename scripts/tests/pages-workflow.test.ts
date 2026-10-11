@@ -132,9 +132,13 @@ describe("pages.yml permissions, concurrency, supply chain", () => {
     expect(text.length).toBeGreaterThan(0);
   });
 
-  it("concurrency group pages, cancel-in-progress false", () => {
-    expect(wf().concurrency?.group).toBe("pages");
-    expect(wf().concurrency?.["cancel-in-progress"]).toBe(false);
+  it("concurrency group pages, cancel-in-progress false, on the deploy job only", () => {
+    const [, d] = deployEntry();
+    expect(d.concurrency?.group).toBe("pages");
+    expect(d.concurrency?.["cancel-in-progress"]).toBe(false);
+    expect(wf().concurrency).toBeUndefined();
+    const [, b] = buildEntry();
+    expect(b.concurrency).toBeUndefined();
   });
 
   it("uses no secrets", () => {

@@ -16,6 +16,7 @@ Constraints for all items below: the live app is `index.html`, `sw.js`, the mani
 - [ ] 4d. Cutover (only on the owner's explicit go, never on a play day): publish apps/free at the root with the same filenames (`sw.js`, manifest, icons), switch to the live storage key `pickleball_tournament_v1`, keep the old app at `/legacy/`. Rollback is reverting the cutover PR.
 
 ## Phase 0b: follow-up
+- [x] CI hygiene: pin workflow runners to ubuntu-24.04 (ubuntu-latest migrates to Ubuntu 26 from 2026-10-19) and scope Pages concurrency to the deploy job only
 - [x] Seeded/injectable RNG and clock in the scheduler; property tests with fixed seeds for no-repeat-partners and no-back-to-back; differential tests for checkScore and standings against the original index.html logic
 - Note: Scheduler heuristic gap: buildSchedule(8,7) leaves 4 repeated partners where 0 is possible; log gap vs lower bound for N=8..14. Not a blocker.
 

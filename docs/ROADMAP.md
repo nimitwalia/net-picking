@@ -21,9 +21,11 @@ Constraints for all items below: the live app is `index.html`, `sw.js`, the mani
 
 ## Phase 1: free v1
 - [ ] JSON export/import + undo last score
+- [ ] Tie rule at match point: golden point (default) or win by 2, with a remembered default the user can change. See docs/specs/tie-rule.md (after item 4c, because the UI must be on core first)
 - [ ] Optional byes (default off) and per-match ranking when byes are on. See docs/specs/byes-and-ranking.md
 - [ ] Courts: floor(N/4) offered, optional court names, rounds view with resting players
 - [ ] Player withdrawal and skip-next-match with undo. See docs/specs/withdrawal.md (depends on seeded RNG, byes, undo)
+- [ ] Rulebook reference screen: a link to the official rules page, plus an optional copy saved on the user's own device. The user uploads their own PDF, it is stored in the browser (IndexedDB) and is never uploaded, bundled or committed (copyright, see docs/RULES_SOURCES.md). The user types the edition label; the app does not read the PDF or derive any rules from it. First test how a stored PDF opens on iOS Safari (including the home-screen app) and Android Chrome; add a PDF-rendering library only if the native viewer is unusable
 - [ ] Mobile QA on iOS Safari and Android Chrome
 
 ## Phase 2: pro (private repo)

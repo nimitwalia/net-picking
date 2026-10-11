@@ -1,103 +1,5 @@
-/* ============ SCHEDULER (pure functions) ============ */
-// SCHED_START
-function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function pk(a,b){return a<b?a*1000+b:b*1000+a;}
-function combosOf(arr,k){
-  const out=[];
-  (function rec(start,cur){
-    if(cur.length===k){out.push(cur.slice());return;}
-    for(let i=start;i<arr.length;i++){cur.push(arr[i]);rec(i+1,cur);cur.pop();}
-  })(0,[]);
-  return out;
-}
-function nCk(n,k){let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r);}
-function candidateCombos(pool,k){
-  if(k===0)return [[]];
-  if(nCk(pool.length,k)<=500)return combosOf(pool,k);
-  const out=[];
-  for(let i=0;i<500;i++)out.push(shuffle(pool).slice(0,k));
-  return out;
-}
-function splitsOf(f){
-  return [[[f[0],f[1]],[f[2],f[3]]],[[f[0],f[2]],[f[1],f[3]]],[[f[0],f[3]],[f[1],f[2]]]];
-}
-function trySchedule(N,m,total){
-  const rem=Array(N).fill(m), last=Array(N).fill(-10);
-  const partner=new Map(), opp=new Map();
-  let prev=[]; const matches=[];
-  const get=(mp,k)=>mp.get(k)||0;
-  for(let s=0;s<total;s++){
-    const slotsLeft=total-s;
-    const forced=[],pool=[];
-    for(let i=0;i<N;i++){
-      if(rem[i]>slotsLeft)return null;
-      if(rem[i]===slotsLeft)forced.push(i);
-      else if(rem[i]>0)pool.push(i);
-    }
-    if(forced.length>4)return null;
-    const need=4-forced.length;
-    if(pool.length<need)return null;
-    let best=null,bestCost=Infinity;
-    for(const c of candidateCombos(pool,need)){
-      const four=forced.concat(c);
-      let base=0;
-      for(const p of four){
-        if(prev.includes(p))base+=15;
-        base-=Math.min(s-last[p],4)*0.8;
-        base-=rem[p]*0.15;
-      }
-      for(const sp of splitsOf(four)){
-        const [[a,b],[c1,d]]=sp;
-        let sc=base;
-        sc+=get(partner,pk(a,b))*20+get(partner,pk(c1,d))*20;
-        for(const x of [a,b])for(const y of [c1,d])sc+=get(opp,pk(x,y))*3;
-        sc+=Math.random()*0.7;
-        if(sc<bestCost){bestCost=sc;best=sp;}
-      }
-    }
-    const [[a,b],[c1,d]]=best;
-    matches.push({t1:[a,b],t2:[c1,d]});
-    partner.set(pk(a,b),get(partner,pk(a,b))+1);
-    partner.set(pk(c1,d),get(partner,pk(c1,d))+1);
-    for(const x of [a,b])for(const y of [c1,d])opp.set(pk(x,y),get(opp,pk(x,y))+1);
-    for(const p of [a,b,c1,d]){rem[p]--;last[p]=s;}
-    prev=[a,b,c1,d];
-  }
-  return matches;
-}
-function evaluate(matches){
-  const partner=new Map(),opp=new Map();
-  let partnerRepeats=0,oppRepeats=0,backToBack=0;
-  matches.forEach((m,i)=>{
-    const [a,b]=m.t1,[c,d]=m.t2;
-    for(const k of [pk(a,b),pk(c,d)]){const v=partner.get(k)||0;if(v>=1)partnerRepeats++;partner.set(k,v+1);}
-    for(const x of [a,b])for(const y of [c,d]){const k=pk(x,y);const v=opp.get(k)||0;if(v>=1)oppRepeats++;opp.set(k,v+1);}
-    if(i>0){const pv=[...matches[i-1].t1,...matches[i-1].t2];
-      for(const p of [a,b,c,d])if(pv.includes(p))backToBack++;}
-  });
-  return {partnerRepeats,oppRepeats,backToBack,cost:partnerRepeats*20+oppRepeats*3+backToBack*15};
-}
-function buildSchedule(N,m,timeMs){
-  const total=N*m/4;
-  const t0=Date.now();
-  let best=null,bestEval=null;
-  for(let att=0;att<800;att++){
-    const r=trySchedule(N,m,total);
-    if(r){
-      const ev=evaluate(r);
-      if(!best||ev.cost<bestEval.cost){best=r;bestEval=ev;}
-      if(ev.cost===0)break;
-    }
-    if(Date.now()-t0>(timeMs||1500)&&best)break;
-  }
-  return best?{matches:best,stats:bestEval}:null;
-}
-function validMatchCounts(N){
-  const out=[];
-  for(let m=1;m<=N-1;m++)if((N*m)%4===0)out.push(m);
-  return out;
-}
-// SCHED_END
+import { buildSchedule, validMatchCounts } from '@net-picking/core';
+/* ============ SCHEDULER: now in @net-picking/core ============ */
 
 /* ============ SCORING RULES ============ */
 const MODES={side:'Service points',rally:'Rally scoring'};
@@ -545,7 +447,7 @@ document.addEventListener('click',e=>{
     const go=()=>{
       el.disabled=true;el.textContent='Generating…';
       setTimeout(()=>{
-        const r=buildSchedule(N,m,1500);
+        const r=buildSchedule(N,m,1500,{random:Math.random,now:Date.now});
         if(!r){render();ask('Could not generate a valid schedule. Try a different number of matches.',()=>{});return;}
         S.players=names;S.m=m;S.matches=r.matches.map(x=>({t1:x.t1,t2:x.t2,winner:null,s1:null,s2:null}));
         S.rules=Object.assign({},S.cfg);S.fcfg=null;S.tieSwap=false;D={};

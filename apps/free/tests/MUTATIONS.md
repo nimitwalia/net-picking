@@ -19,3 +19,17 @@ from outside the repo and selected with `NEW_BASE_OVERRIDE=<url>`); a, b were ca
 Mutations a, e, b (structure side) were applied to a scratch `main.js` (selected with `MAIN_JS_UNDER_TEST=<file>`,
 `INDEX_UNDER_TEST=<file>`): a and e were caught by structure-s2 / structure-s3; b is correctly not a structure concern.
 d and f were not dry-run (they need the S5 `sw.js` / a real `main.js`).
+
+## Tie-rule item (S4): mutations run, with real results
+
+Each mutation was applied by hand, `vite build` re-run (the Playwright global setup does not rebuild when only `src/` changes, so a stale `dist/` would hide it), the named tests run, then reverted (`git diff -- apps/free/src packages/core/src` empty afterwards).
+
+| # | Mutation | Failing tests |
+|---|----------|---------------|
+| a | golden branch of `checkScore` (packages/core/src/scoring.ts) no longer rejects scores above `to` (12-10 accepted) | core `tie-rule.test.ts`: 9 failed (valid set exactly, named rejections, message test, for each to 7/11/15/21); e2e `tie-scoring` "group match, golden, to 7 ... grid" and "named cases, to 11" |
+| b | golden branch rejects `a < b` (10-11 rejected, argument order) | core `tie-rule.test.ts`: 5 failed (valid set exactly x4, "accepts 11-10 and 10-11"); e2e `tie-defaults` "new tournament (empty storage) defaults to golden", `tie-scoring` "named cases, to 11" |
+| c | `tieOf` treats a missing value as golden | core tests pass (the app helper is not in core); e2e `tie-defaults`: 8 legacy fixtures "behaves as win2 ..." and "legacy save is win2 even with no prefs" (9 failed) |
+| d | `makeDefault` also writes `tie` into `S.rules` and saves | e2e `tie-defaults` "changing the remembered default never alters a tournament in progress; reload keeps both" |
+| e | hard-coded "win by 2" in the per-match rule line (`.rhint`) under golden | e2e `tie-text` "golden: no win by 2 ... anywhere" and "golden: scoring hint, per-match rule line ..."; `smoke-golden` x4 |
+| f | `saveScore` uses `S.rules` for the final instead of `S.finals.rules` | e2e `tie-scoring` "final follows its own setting" 8 of 16 (the two mixed combinations for each to) |
+| g | try/catch removed around the prefs read | e2e `tie-defaults`: "prefs getItem throws ...", "all localStorage access throws ...", corrupt prefs "garbage" and "" (JSON.parse throws); these time out because the app fails to load |

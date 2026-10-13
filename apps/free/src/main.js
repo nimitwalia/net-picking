@@ -5,8 +5,13 @@ import { buildSchedule, validMatchCounts, checkScore, standings as coreStandings
 const MODES={side:'Service points',rally:'Rally scoring'};
 // Tie at match point. A missing value (a tournament saved before this setting existed) reads as 'win2'.
 const tieOf=r=>r&&r.tie==='golden'?'golden':'win2';
-// Default for NEW tournaments. (The remembered-default preference extends this later.)
-const defaultTie=()=>'golden';
+// Remembered default for NEW tournaments, kept on this device under its own key (never the tournament key, never a live-app key).
+const PREFS_KEY='pickleball_prefs_next_v1';
+const TIE_LABEL={golden:'Golden point',win2:'Win by 2 (deuce)'};
+function readTiePref(){try{const p=JSON.parse(localStorage.getItem(PREFS_KEY));return p&&(p.tie==='win2'||p.tie==='golden')?p.tie:null;}catch(e){return null;}}
+function writeTiePref(v){try{localStorage.setItem(PREFS_KEY,JSON.stringify({tie:v}));return true;}catch(e){return false;}}
+const defaultTie=()=>readTiePref()||'golden';
+let defaultSaved=false; // feedback shown after pressing "Make this my default"
 const ruleText=r=>`${MODES[r.mode]} · to ${r.to} · ${tieOf(r)==='golden'?'golden point':'win by 2'}`;
 
 /* ============ STATE ============ */
@@ -61,7 +66,7 @@ function render(){
   if(S.tab==='finals'&&S.finals&&S.finals.winner)prepareShare();
 }
 
-function rulesInner(c){
+function rulesInner(c,withDefault){
   return `<div class="seg" role="group" aria-label="Scoring type">
     <button class="${c.mode==='side'?'on':''}" data-act="rule" data-k="mode" data-v="side">Service points</button>
     <button class="${c.mode==='rally'?'on':''}" data-act="rule" data-k="mode" data-v="rally">Rally scoring</button></div>
@@ -72,7 +77,10 @@ function rulesInner(c){
     +`<div class="seg" data-tie-ui="seg" role="group" aria-label="Tie at match point">`
     +`<button data-tie-ui="golden" class="${tieOf(c)==='golden'?'on':''}" data-act="rule" data-k="tie" data-v="golden">Golden point</button>`
     +`<button data-tie-ui="win2" class="${tieOf(c)==='win2'?'on':''}" data-act="rule" data-k="tie" data-v="win2">Win by 2 (deuce)</button></div>`
-    +`<p class="hint" data-tie-ui="hint">Golden point is a house rule. Official USA Pickleball scoring is win by 2 (Rule 15.C).</p>`;
+    +`<p class="hint" data-tie-ui="hint">Golden point is a house rule. Official USA Pickleball scoring is win by 2 (Rule 15.C).</p>`
+    +(withDefault?`<div data-tie-ui="default-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px">`
+      +`<button data-tie-ui="default" data-act="makeDefault">${defaultSaved?'Default saved':'Make this my default'}</button>`
+      +`<span class="hint" data-tie-ui="default-note" style="margin:0">${defaultSaved?'Saved as default for new tournaments. ':''}Default for new tournaments: ${defaultTie()==='golden'?'Golden point':'not golden point'}</span></div>`:'');
 }
 
 function setupInfoHtml(){
@@ -119,7 +127,7 @@ function viewSetup(){
     <label for="players">Players</label>
     <textarea id="players" data-act="playersInput" placeholder="Nimit&#10;Divya">${esc(S.playersText)}</textarea>
     <div id="setupInfo">${setupInfoHtml()}</div></div>
-    <div class="card"><label>Scoring for the matches</label><div class="rules" data-ns="cfg">${rulesInner(S.cfg)}</div></div>
+    <div class="card"><label>Scoring for the matches</label><div class="rules" data-ns="cfg">${rulesInner(S.cfg,true)}</div></div>
     <div id="setupRest">${setupRestHtml()}</div>`;
 }
 
@@ -399,11 +407,15 @@ document.addEventListener('click',e=>{
   if(act==='mNo'){document.getElementById('modal').hidden=true;pending=null;return;}
   if(act==='mYes'){document.getElementById('modal').hidden=true;const f=pending;pending=null;if(f)f();return;}
   if(act==='imgClose'){document.getElementById('imgModal').hidden=true;return;}
+  if(act==='makeDefault'){
+    const box=el.closest('.rules');defaultSaved=writeTiePref(tieOf(S.cfg));box.innerHTML=rulesInner(S.cfg,true);return;
+  }
   if(act==='rule'){
+    defaultSaved=false;
     const box=el.closest('.rules');const ns=box.dataset.ns;
     S[ns][el.dataset.k]=el.dataset.k==='to'?Number(el.dataset.v):el.dataset.v;
     if(ns==='cfg'&&S.matches.length&&!hasResults())S.rules=Object.assign({},S.cfg);
-    save();box.innerHTML=rulesInner(S[ns]);if(ns==='cfg'){const sr=document.getElementById('setupRest');if(sr)sr.innerHTML=setupRestHtml();}return;
+    save();box.innerHTML=rulesInner(S[ns],ns==='cfg');if(ns==='cfg'){const sr=document.getElementById('setupRest');if(sr)sr.innerHTML=setupRestHtml();}return;
   }
   if(act==='saveScore'){saveScore(el.dataset.id);return;}
   if(act==='clearScore'){clearScore(el.dataset.id);return;}
@@ -437,7 +449,7 @@ document.addEventListener('click',e=>{
     ask('Reset the final? The teams are worked out again from the leaderboard.',()=>{S.finals=null;delete D.f;save();render();});
   }
   else if(act==='newTournament'){
-    ask('Start a brand-new tournament? All players, matches and results will be erased.',()=>{const keep=S.cfg;S=fresh();S.cfg=Object.assign({},keep,{tie:defaultTie()});S.rules=Object.assign({},S.cfg);D={};save();render();});
+    ask('Start a brand-new tournament? All players, matches and results will be erased.',()=>{const keep=S.cfg;defaultSaved=false;S=fresh();S.cfg=Object.assign({},keep,{tie:defaultTie()});S.rules=Object.assign({},S.cfg);D={};save();render();});
   }
 });
 document.addEventListener('input',e=>{

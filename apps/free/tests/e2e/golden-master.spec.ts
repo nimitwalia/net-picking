@@ -53,6 +53,13 @@ interface Trace {
   finalsStarted: string; finalBad: string; champion: string; boardAfter: string; state: unknown;
 }
 
+/** The new app stores the explicit tie rule ('win2' here) in cfg/rules/fcfg/finals.rules; the old app has no such
+ *  key. Drop it so the persisted-state comparison covers everything that existed before. */
+function stripTie(st: any): unknown {
+  for (const o of [st?.cfg, st?.rules, st?.fcfg, st?.finals?.rules]) if (o) delete o.tie;
+  return st;
+}
+
 async function swapStates(page: Page): Promise<{ tie: boolean; texts: string[] }> {
   const swap = page.locator('button[data-act="tieSwap"]');
   if ((await swap.count()) === 0) return { tie: false, texts: [] };
@@ -103,7 +110,7 @@ async function drive(page: Page, s: Scn, scores?: Array<[number, number]>, keepS
   await tab(page, 'board'); const boardAfter = await views(page);
   const key = await page.evaluate(() => Object.keys(localStorage)[0]);
   return { rejected, midMatches, midBoard, midBoardAt, matches, board, finalsPre, tieNote: sw.tie, swapped: sw.texts,
-    finalsStarted, finalBad, champion, boardAfter, state: await saved(page, key) };
+    finalsStarted, finalBad, champion, boardAfter, state: stripTie(await saved(page, key)) };
 }
 
 function sameTrace(o: Trace, n: Trace): string[] {

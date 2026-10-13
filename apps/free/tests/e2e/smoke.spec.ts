@@ -34,6 +34,8 @@ for (const TO of [7, 11, 15, 21]) {
     await page.fill('#players', PLAYERS.join('\n'));
     await expect(page.locator('#setupInfo')).toContainText('5 players');
     await page.click(`[data-ns="cfg"] button[data-k="to"][data-v="${TO}"]`);
+    // New tournaments default to golden point; this test checks win by 2, so select it explicitly.
+    await page.click('[data-ns="cfg"] button[data-k="tie"][data-v="win2"]');
     await noOverflow(page, 'setup (players entered)');
 
     // Valid matches-per-player options for N=5 are exactly {4}.

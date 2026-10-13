@@ -37,7 +37,7 @@ describe('(c) storage key isolation', () => {
     expect(html).not.toContain('pickleball_tournament_v1');
     const keys = [...stripComments(main).matchAll(/localStorage\.(?:getItem|setItem|removeItem)\(\s*([^,)]+)/g)].map((m) => m[1].trim());
     expect(keys.length).toBeGreaterThan(0);
-    for (const k of keys) expect(k, 'only the KEY constant is used for storage').toBe('KEY');
+    for (const k of keys) expect(['KEY', 'PREFS_KEY'], 'only the KEY and PREFS_KEY constants are used for storage').toContain(k);
   });
 });
 

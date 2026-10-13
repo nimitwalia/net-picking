@@ -74,11 +74,19 @@ export function scriptedScore(i: number, to: number, idx: number): [number, numb
   return winnerA ? [hi, lo] : [lo, hi];
 }
 
+/** The new app defaults new tournaments to golden point; these old-behaviour tests need win by 2, so pick it
+ *  explicitly. The old app has no such control, so this is a no-op there. */
+export async function selectWin2(page: Page): Promise<void> {
+  const b = page.locator('[data-ns="cfg"] button[data-k="tie"][data-v="win2"]');
+  if ((await b.count()) > 0) await b.click();
+}
+
 export async function setup(page: Page, s: Scn): Promise<void> {
   const names = s.names ?? NAMES.slice(0, s.n);
   await page.fill('#players', names.join('\n'));
   await page.click(`[data-ns="cfg"] button[data-k="mode"][data-v="${s.mode}"]`);
   await page.click(`[data-ns="cfg"] button[data-k="to"][data-v="${s.to}"]`);
+  await selectWin2(page);
   await page.selectOption('#mSel', String(s.m));
   await page.click('button[data-act="generate"]');
   await page.waitForFunction((t) => document.querySelectorAll('.mcard').length === t, (s.n * s.m) / 4);
@@ -96,7 +104,15 @@ export async function tab(page: Page, t: 'setup' | 'matches' | 'board' | 'finals
 
 /** innerText of nav + view, as the user reads it. */
 export async function views(page: Page): Promise<string> {
-  return page.evaluate(() => (document.getElementById('nav') as HTMLElement).innerText + '\n----\n' + (document.getElementById('view') as HTMLElement).innerText);
+  // Elements marked data-tie-ui exist only in the new app (the tie-rule control and its hint); the old app has
+  // none. Hide them while reading so the old-vs-new text comparison covers everything that existed before.
+  return page.evaluate(() => {
+    const st = document.createElement('style');
+    st.textContent = '[data-tie-ui]{display:none!important}';
+    document.head.appendChild(st);
+    try { return (document.getElementById('nav') as HTMLElement).innerText + '\n----\n' + (document.getElementById('view') as HTMLElement).innerText; }
+    finally { st.remove(); }
+  });
 }
 
 export async function saved(page: Page, key: string): Promise<unknown> {

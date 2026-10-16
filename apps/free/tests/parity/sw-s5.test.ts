@@ -1,16 +1,17 @@
-// Stage S5 (offline): the worker must precache the built entry JS under cache net-picking-next-v3, and drop the
-// old net-picking-next-v1 cache, while still deleting only caches it owns (prefix net-picking-next-).
+// Offline precache of the built app (cutover 4d rules): the worker precaches the built entry JS, index, manifest,
+// icons and the self-hosted fonts under one net-picking-v<n> cache (n != 1), and on activation drops the old app
+// cache net-picking-v1 and retired net-picking-next-* caches while deleting nothing it does not own.
 import { describe, expect, it, beforeAll } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import vm from 'node:vm';
 
 const free = resolve(import.meta.dirname, '../..');
 const dist = resolve(free, 'dist');
 const swPath = process.env.SW_UNDER_TEST ?? resolve(dist, 'sw.js');
-const LIVE = 'net-picking-v1';
-const PREFIX = 'net-picking-next-';
+const OLD_APP = 'net-picking-v1';
+const isOwn = (n: string) => /^net-picking-v\d+$/.test(n) && n !== OLD_APP;
 
 async function runSw(initial: string[]) {
   const store = new Map<string, Map<string, unknown>>(initial.map((n) => [n, new Map()]));
@@ -44,7 +45,7 @@ beforeAll(() => {
   entry = m[1].replace(/^\.\//, '');
 }, 120_000);
 
-describe('S5 service worker', () => {
+describe('service worker precache and cleanup', () => {
   it('built entry JS exists in dist and has a fixed, non-hashed file name', () => {
     expect(existsSync(resolve(dist, entry)), entry).toBe(true);
     const base = entry.split('/').pop()!;
@@ -58,23 +59,28 @@ describe('S5 service worker', () => {
     for (const f of norm) if (f !== '' && f !== '.') expect(existsSync(resolve(dist, f)), `precached ${f} missing from dist`).toBe(true);
     for (const must of ['index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png']) expect(norm).toContain(must);
   });
-  it('uses cache net-picking-next-v3 only', async () => {
+  it('every built woff2 font is in the precache list', async () => {
+    const { files } = await runSw([]);
+    const norm = files.map((f) => f.replace(/^\.\//, ''));
+    const fonts = readdirSync(resolve(dist, 'assets')).filter((f) => f.endsWith('.woff2')).map((f) => `assets/${f}`);
+    expect(fonts.length, 'built fonts present').toBeGreaterThanOrEqual(3);
+    for (const f of fonts) expect(norm, f).toContain(f);
+  });
+  it('uses a single net-picking-v<n> cache, n != 1', async () => {
     const { opened } = await runSw([]);
-    expect(opened).toContain('net-picking-next-v3');
-    for (const n of opened) expect(n).toBe('net-picking-next-v3');
+    expect(opened.length).toBeGreaterThan(0);
+    for (const n of opened) expect(isOwn(n), n).toBe(true);
+    expect(new Set(opened).size).toBe(1);
   });
-  it('activation removes net-picking-next-v1 and keeps v3, the live cache and foreign caches', async () => {
-    const { names } = await runSw([LIVE, 'some-other-cache', 'net-picking-next-v1', 'net-picking-next-v3']);
+  it('activation removes net-picking-v1 and net-picking-next-*, keeps the current and foreign caches', async () => {
+    const { opened } = await runSw([]);
+    const cur = opened[0];
+    const { names } = await runSw([OLD_APP, 'net-picking-next-v3', 'net-picking-next-v1', cur, 'someone-else', 'other-app-v1']);
+    expect(names).not.toContain(OLD_APP);
+    expect(names).not.toContain('net-picking-next-v3');
     expect(names).not.toContain('net-picking-next-v1');
-    expect(names).toContain('net-picking-next-v3');
-    expect(names).toContain(LIVE);
-    expect(names).toContain('some-other-cache');
-  });
-  it('still deletes only caches starting with net-picking-next-', () => {
-    const src = readFileSync(swPath, 'utf8');
-    expect(src).toContain('k.startsWith(P)');
-    expect(src).toMatch(/const P='net-picking-next-'/);
-    expect(src).not.toContain('ks.filter(k=>k!==C)');
-    expect(PREFIX).toBe('net-picking-next-');
+    expect(names).toContain(cur);
+    expect(names).toContain('someone-else');
+    expect(names).toContain('other-app-v1');
   });
 });

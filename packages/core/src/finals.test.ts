@@ -280,7 +280,7 @@ describe('finalFour properties', () => {
 });
 
 // ---------------------------------------------------------------- differential
-const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../index.html'), 'utf8');
+const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../apps/free/tests/fixtures/legacy/index.html'), 'utf8');
 function extract(name: string): string {
   const start = html.indexOf(`function ${name}(`);
   if (start < 0) throw new Error(`function ${name} not found in index.html`);

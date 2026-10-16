@@ -4,7 +4,7 @@
 // them the DOM equals the original app's DOM.
 import { expect, test, type Page } from '@playwright/test';
 import { HINT, tiePaths } from './tie-harness';
-import { OLD_KEY, NEW_KEY, openPage, saveScore, saved, setup, startRootServer, tab, type Scn } from './harness';
+import { OLD_KEY, NEW_KEY, openPage, saveScore, saved, setup, startLegacyServer, tab, type Scn } from './harness';
 
 const NORM = (h: string) => h.replace(/\s+/g, ' ').replace(/> </g, '><').trim();
 
@@ -32,10 +32,10 @@ const FINAL_COUNT = 5;
 
 test('exact data-tie-ui inventory per view (new app) and DOM equality with the old app after dropping them', async ({ browser }) => {
   test.setTimeout(120_000);
-  const root = await startRootServer();
+  const root = await startLegacyServer();
   try {
     const O = await openPage(browser, root.base, SCN.seed);
-    const N = await openPage(browser, process.env.PREVIEW_BASE_URL!, SCN.seed);
+    const N = await openPage(browser, process.env.APP_BASE_URL!, SCN.seed);
     try {
       const dom: Record<string, [string, string]> = {};
       const grab = async (k: string) => { dom[k] = [NORM(await viewHtmlWithoutTieUi(O.page)), NORM(await viewHtmlWithoutTieUi(N.page))]; };

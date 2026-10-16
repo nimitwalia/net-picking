@@ -71,19 +71,15 @@ test('(c) no googleapis/gstatic in dist or apps/free sources', () => {
   expect(html).not.toMatch(/<script[^>]+src=["']https?:\/\//i);
 });
 
-test('(d) SW deletes only net-picking-next- caches and the cache name is bumped from v2', () => {
+test('(d) SW cleans up only the old app cache and net-picking-next-*, and the cache name is a net-picking-v<n> other than v1', () => {
   const sw = text(join(dist, SW_FILE));
+  // the cleanup targets are named in the worker: the old app cache and the retired preview prefix
+  expect(sw).toContain('net-picking-v1');
   expect(sw).toContain('net-picking-next-');
-  // every cache deletion is guarded by the own-prefix check
-  expect(sw).toMatch(/startsWith\(\s*(P|['"]net-picking-next-['"])\s*\)/);
-  expect(sw).toMatch(/const\s+P\s*=\s*['"]net-picking-next-['"]|startsWith\(\s*['"]net-picking-next-['"]/);
-  expect(sw).not.toMatch(/net-picking-(?!next-)/);
   // no unconditional delete-all
   expect(sw).not.toMatch(/keys\(\)\s*\.then\(\s*\w+\s*=>\s*Promise\.all\(\s*\w+\.map\(\s*\w+\s*=>\s*caches\.delete/);
-  // cache name: P + 'vN' or a literal; must not be v2
-  expect(sw).not.toMatch(/net-picking-next-v2\b/);
-  expect(sw).not.toMatch(/P\s*\+\s*['"]v2['"]/);
-  const m = sw.match(/P\s*\+\s*['"]([^'"]+)['"]/) ?? sw.match(/['"]net-picking-next-([^'"]+)['"]/);
-  expect(m, 'cache name definition found').not.toBeNull();
-  expect(m![1]).not.toBe('v2');
+  expect(sw).not.toContain('ks.filter(k=>k!==C)');
+  // own cache name: some net-picking-v<n> literal with n != 1 (behaviour is covered in tests/parity/sw-*.test.ts)
+  const names = [...sw.matchAll(/net-picking-v(\d+)/g)].map((m) => m[1]);
+  expect(names.some((n) => n !== '1'), `own cache name found among ${names.join(',')}`).toBe(true);
 });

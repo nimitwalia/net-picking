@@ -27,7 +27,7 @@ async function loadAll(page: Page) {
 }
 
 test('(a) no third-party requests on first load, 360x800', async ({ browser }) => {
-  const base = process.env.PREVIEW_BASE_URL!;
+  const base = process.env.APP_BASE_URL!;
   const origin = new URL(base).origin;
   const ctx = await browser.newContext({ viewport: { width: 360, height: 800 }, serviceWorkers: 'allow' });
   const seen: string[] = [];
@@ -50,7 +50,7 @@ test('(a) no third-party requests on first load, 360x800', async ({ browser }) =
 });
 
 test('(b) offline: fonts render from precache with all three families loaded', async ({ browser }) => {
-  const base = process.env.PREVIEW_BASE_URL!;
+  const base = process.env.APP_BASE_URL!;
   const ctx = await browser.newContext({ viewport: { width: 360, height: 800 }, serviceWorkers: 'allow' });
   // Evidence: every failure with its error text and whether it was issued by the service worker (r.serviceWorker())
   // or by the page. Offline, the SW's own network-first fetch() fails (ERR_INTERNET_DISCONNECTED) and falls back
@@ -73,7 +73,7 @@ test('(b) offline: fonts render from precache with all three families loaded', a
   await swReady(page);
   // precache complete: the own cache has at least one woff2 per family-ish (>=3 files)
   await expect.poll(() => page.evaluate(async () => {
-    const names = (await caches.keys()).filter((k) => k.startsWith('net-picking-next-'));
+    const names = (await caches.keys()).filter((k) => /^net-picking-v\d+$/.test(k));
     let n = 0;
     for (const k of names) for (const r of await (await caches.open(k)).keys()) if (/\.woff2(\?|$)/.test(r.url)) n++;
     return n;

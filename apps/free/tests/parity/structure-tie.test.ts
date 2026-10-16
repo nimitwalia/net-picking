@@ -1,16 +1,16 @@
 // Tie-rule item: structure rules that e2e cannot see.
 //  - no local checkScore in the app (it comes from @net-picking/core);
 //  - the remembered-default storage key is its own key (never the tournament key, the live app's key, or any key
-//    the root index.html uses);
+//    the legacy app's index.html uses);
 //  - no network capability added compared with main (AGENTS.md rule 5).
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { blankLiterals, coreLocal, definesLocally, free, readMain, root, stripComments } from './src-helpers';
+import { blankLiterals, coreLocal, definesLocally, free, legacyDir, readMain, root, stripComments } from './src-helpers';
 
-const TOURNAMENT_KEY = 'pickleball_tournament_next_v1';
-const PREFS_KEY = 'pickleball_prefs_next_v1';
+const TOURNAMENT_KEY = 'pickleball_tournament_v1';
+const PREFS_KEY = 'pickleball_prefs_v1';
 const nc = stripComments(readMain());
 const code = blankLiterals(nc);
 
@@ -26,20 +26,22 @@ describe('storage keys', () => {
   const keysIn = (s: string) => new Set(s.match(/pickleball_[A-Za-z0-9_]+/g) ?? []);
   const mine = keysIn(nc);
   const rootKeys = new Set([
-    ...keysIn(readFileSync(resolve(root, 'index.html'), 'utf8')),
-    ...keysIn(readFileSync(resolve(root, 'sw.js'), 'utf8')),
+    ...keysIn(readFileSync(resolve(legacyDir, 'index.html'), 'utf8')),
+    ...keysIn(readFileSync(resolve(legacyDir, 'sw.js'), 'utf8')),
   ]);
   it('the app uses exactly the tournament key and the prefs key', () => {
     expect([...mine].sort()).toEqual([PREFS_KEY, TOURNAMENT_KEY].sort());
   });
-  it('the prefs key differs from the tournament key, the live key and every root key', () => {
+  it('the prefs key differs from the tournament key and is new (the old app never used it)', () => {
     expect(PREFS_KEY).not.toBe(TOURNAMENT_KEY);
-    expect(PREFS_KEY).not.toBe('pickleball_tournament_v1');
     expect(rootKeys.has(PREFS_KEY)).toBe(false);
-    expect(rootKeys.has('pickleball_tournament_v1')).toBe(true); // sanity: the scan does see the root key
+    expect(rootKeys.has('pickleball_tournament_v1')).toBe(true); // sanity: the scan does see the old app's key
   });
-  it('the tournament key is unchanged and not shared with the root', () => {
-    expect(rootKeys.has(TOURNAMENT_KEY)).toBe(false);
+  it('the tournament key is the old app key, unchanged (saved tournaments carry over)', () => {
+    expect(rootKeys.has(TOURNAMENT_KEY)).toBe(true);
+  });
+  it('no retired _next_ key appears in the app source', () => {
+    expect([...mine].filter((k) => k.includes('_next_'))).toEqual([]);
   });
 });
 

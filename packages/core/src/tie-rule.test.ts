@@ -6,8 +6,8 @@ import vm from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import { checkScore, type TieRule } from './index';
 
-// Original checkScore from the root index.html (read only).
-const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../index.html'), 'utf8');
+// Original checkScore from the legacy fixture index.html (tag legacy-final; read only).
+const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../apps/free/tests/fixtures/legacy/index.html'), 'utf8');
 function extract(name: string): string {
   const start = html.indexOf(`function ${name}(`);
   if (start < 0) throw new Error(`function ${name} not found in index.html`);

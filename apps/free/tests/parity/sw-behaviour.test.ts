@@ -1,7 +1,8 @@
 // Behaviour test: run the service worker in a stubbed ServiceWorker global with a fake CacheStorage.
-// Cache Storage is shared across the origin, and the live sw.js deletes every cache not named
-// 'net-picking-v1' on activate. The preview must therefore never delete a cache it does not own
-// and must never use the live name. Set SW_UNDER_TEST to an absolute path to run against another file.
+// Post-cutover (4d) rules: the worker owns exactly one versioned cache net-picking-v<n> with n != 1 (v1 was the old
+// app's cache). On activate it deletes net-picking-v1 (the old app) and any net-picking-next-* (the retired
+// preview), and nothing else: other apps' caches on the same origin must survive.
+// Set SW_UNDER_TEST to an absolute path to run against another file.
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -9,12 +10,12 @@ import vm from 'node:vm';
 
 const free = resolve(import.meta.dirname, '../..');
 const swPath = process.env.SW_UNDER_TEST ?? resolve(free, 'public/sw.js');
-const PREFIX = 'net-picking-next-';
-const LIVE = 'net-picking-v1';
+const OLD_APP = 'net-picking-v1';
+const RETIRED = ['net-picking-next-v1', 'net-picking-next-v2', 'net-picking-next-v3'];
 
-// S5 renames the cache from net-picking-next-v1 to net-picking-next-v2 (asserted in sw-s5.test.ts). This file is
-// written to pass both before and after S5, so it asks the worker which own cache it uses.
-const OWN = /^net-picking-next-v\d+$/;
+// Ask the worker which own cache it uses: net-picking-v<n>, n != 1.
+const OWN = /^net-picking-v(\d+)$/;
+const isOwn = (n: string) => OWN.test(n) && n !== OLD_APP;
 
 async function runSw(initial: string[]) {
   const store = new Map<string, Map<string, unknown>>(initial.map((n) => [n, new Map()]));
@@ -43,33 +44,39 @@ async function runSw(initial: string[]) {
   };
   await fire('install');
   await fire('activate');
-  return { names: [...store.keys()], opened, current: opened.find((n) => OWN.test(n)) as string };
+  return { names: [...store.keys()], opened, current: opened.find(isOwn) as string };
 }
 
 describe('sw.js behaviour (stubbed ServiceWorker + fake CacheStorage)', () => {
-  it('uses its own prefixed cache name, never the live one', async () => {
+  it('opens only a net-picking-v<n> cache with n != 1', async () => {
     const { opened } = await runSw([]);
     expect(opened.length).toBeGreaterThan(0);
     for (const n of opened) {
-      expect(n).not.toBe(LIVE);
-      expect(n.startsWith(PREFIX)).toBe(true);
+      expect(n).not.toBe(OLD_APP);
+      expect(isOwn(n), n).toBe(true);
     }
-    expect(opened.some((n) => OWN.test(n)), 'opens a net-picking-next-v<N> cache').toBe(true);
   });
 
-  it('activate keeps live, foreign and current caches; deletes only old own caches', async () => {
+  it('activate deletes the old app cache and every net-picking-next-* cache, keeps the current cache', async () => {
     const { current } = await runSw([]);
-    const older = ['net-picking-next-v0', current === 'net-picking-next-v1' ? 'net-picking-next-v-1' : 'net-picking-next-v1'];
-    const { names } = await runSw([LIVE, 'some-other-cache', ...older, current]);
-    expect(names).toContain(LIVE);
-    expect(names).toContain('some-other-cache');
+    const { names } = await runSw([OLD_APP, ...RETIRED, 'net-picking-next-v99', current]);
     expect(names).toContain(current);
-    for (const o of older) expect(names, o).not.toContain(o);
+    for (const gone of [OLD_APP, ...RETIRED, 'net-picking-next-v99']) expect(names, gone).not.toContain(gone);
   });
 
-  it('never deletes anything it does not own', async () => {
-    const foreign = [LIVE, 'some-other-cache', 'workbox-precache', 'net-picking-v2', 'net-picking-nextish'];
-    const { names } = await runSw([...foreign, 'net-picking-next-v1', 'net-picking-next-v2']);
+  it('only deletes what it owns: foreign caches survive activation', async () => {
+    const { current } = await runSw([]);
+    const foreign = ['someone-else', 'other-app-v1', 'workbox-precache', 'net-picking-nextish', 'my-net-picking-v1'];
+    const { names } = await runSw([...foreign, OLD_APP, ...RETIRED, current]);
     for (const f of foreign) expect(names, f).toContain(f);
+    expect(names).not.toContain(OLD_APP);
+  });
+
+  it('with only foreign caches present, nothing foreign is deleted and the own cache is created', async () => {
+    const foreign = ['someone-else', 'other-app-v1'];
+    const { names, current } = await runSw(foreign);
+    for (const f of foreign) expect(names).toContain(f);
+    expect(isOwn(current)).toBe(true);
+    expect(names).toContain(current);
   });
 });

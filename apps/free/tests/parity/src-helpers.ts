@@ -7,11 +7,13 @@ import { resolve } from 'node:path';
 export const free = resolve(import.meta.dirname, '../..');
 export const indexPath = process.env.INDEX_UNDER_TEST ?? resolve(free, 'index.html');
 export const root = resolve(free, '../..');
+/** Byte-exact copy of the old app (tag legacy-final); the oracle for structure comparisons. */
+export const legacyDir = resolve(free, 'tests/fixtures/legacy');
 export const mainPath = process.env.MAIN_JS_UNDER_TEST ?? resolve(free, 'src/main.js');
 export const readMain = (): string => readFileSync(mainPath, 'utf8');
 export const readRootScript = (): string => {
-  const m = readFileSync(resolve(root, 'index.html'), 'utf8').match(/<script>([\s\S]*?)<\/script>/);
-  if (!m) throw new Error('root index.html has no inline script');
+  const m = readFileSync(resolve(legacyDir, 'index.html'), 'utf8').match(/<script>([\s\S]*?)<\/script>/);
+  if (!m) throw new Error('legacy fixture index.html has no inline script');
   return m[1];
 };
 

@@ -1,18 +1,19 @@
 // Shared harness for the old-vs-new golden-master and saved-state specs.
-// OLD = the live root /index.html (oracle, storage key pickleball_tournament_v1).
-// NEW = the apps/free build (storage key pickleball_tournament_next_v1).
+// OLD = the legacy app fixture tests/fixtures/legacy/index.html (byte-exact copy of tag legacy-final; oracle).
+// NEW = the apps/free build, which is now the live app. Both use storage key pickleball_tournament_v1 (they are
+// always on different origins in these tests, so they do not share storage).
 import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 
 export const OLD_KEY = 'pickleball_tournament_v1';
-export const NEW_KEY = 'pickleball_tournament_next_v1';
-const root = resolve(import.meta.dirname, '../../../..');
+export const NEW_KEY = 'pickleball_tournament_v1';
+export const legacyDir = resolve(import.meta.dirname, '../fixtures/legacy');
 
-/** Serve the unmodified root index.html (only that file) under /net-picking/. */
-export async function startRootServer(): Promise<{ base: string; close: () => Promise<void> }> {
-  const html = readFileSync(resolve(root, 'index.html'));
+/** Serve the unmodified legacy fixture index.html (only that file) under /net-picking/. */
+export async function startLegacyServer(): Promise<{ base: string; close: () => Promise<void> }> {
+  const html = readFileSync(resolve(legacyDir, 'index.html'));
   const server: Server = createServer((req, res) => {
     const p = new URL(req.url ?? '/', 'http://x').pathname;
     if (p === '/net-picking/' || p === '/net-picking/index.html') {

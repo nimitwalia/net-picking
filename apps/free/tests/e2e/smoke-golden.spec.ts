@@ -17,7 +17,7 @@ async function save(page: Page, id: string, a: number, b: number) {
 
 for (const TO of [7, 11, 15, 21]) {
   test(`golden full tournament flow at 360px, play to ${TO}`, async ({ page }) => {
-    await page.goto(process.env.PREVIEW_BASE_URL!);
+    await page.goto(process.env.APP_BASE_URL!);
     await page.waitForSelector('#nav button');
     await expect(page.locator('[data-ns="cfg"] button[data-k="tie"][data-v="golden"]')).toHaveClass(/\bon\b/);
     await noOverflow(page, 'setup (empty, golden default)');

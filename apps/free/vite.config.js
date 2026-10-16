@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { precachePlugin } from './precache.js';
 
 // base './' keeps every asset URL relative so the build works from any sub-path.
 // cssMinify off: leave the inline <style> byte-identical to the source page.
@@ -10,5 +11,6 @@ const names = {
 };
 export default defineConfig({
   base: './',
+  plugins: [precachePlugin()],
   build: { cssMinify: false, rollupOptions: { output: names } },
 });

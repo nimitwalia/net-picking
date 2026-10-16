@@ -1,4 +1,4 @@
-// Stage S5 (offline): the worker must precache the built entry JS under cache net-picking-next-v2, and drop the
+// Stage S5 (offline): the worker must precache the built entry JS under cache net-picking-next-v3, and drop the
 // old net-picking-next-v1 cache, while still deleting only caches it owns (prefix net-picking-next-).
 import { describe, expect, it, beforeAll } from 'vitest';
 import { execFileSync } from 'node:child_process';
@@ -58,15 +58,15 @@ describe('S5 service worker', () => {
     for (const f of norm) if (f !== '' && f !== '.') expect(existsSync(resolve(dist, f)), `precached ${f} missing from dist`).toBe(true);
     for (const must of ['index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png']) expect(norm).toContain(must);
   });
-  it('uses cache net-picking-next-v2 only', async () => {
+  it('uses cache net-picking-next-v3 only', async () => {
     const { opened } = await runSw([]);
-    expect(opened).toContain('net-picking-next-v2');
-    for (const n of opened) expect(n).toBe('net-picking-next-v2');
+    expect(opened).toContain('net-picking-next-v3');
+    for (const n of opened) expect(n).toBe('net-picking-next-v3');
   });
-  it('activation removes net-picking-next-v1 and keeps v2, the live cache and foreign caches', async () => {
-    const { names } = await runSw([LIVE, 'some-other-cache', 'net-picking-next-v1', 'net-picking-next-v2']);
+  it('activation removes net-picking-next-v1 and keeps v3, the live cache and foreign caches', async () => {
+    const { names } = await runSw([LIVE, 'some-other-cache', 'net-picking-next-v1', 'net-picking-next-v3']);
     expect(names).not.toContain('net-picking-next-v1');
-    expect(names).toContain('net-picking-next-v2');
+    expect(names).toContain('net-picking-next-v3');
     expect(names).toContain(LIVE);
     expect(names).toContain('some-other-cache');
   });

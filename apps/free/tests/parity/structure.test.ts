@@ -60,9 +60,9 @@ describe('(d) imports and network', () => {
       expect(new RegExp(`(?<![\\w$])${api}(?![\\w$])`).test(code), `${api} must not appear in main.js`).toBe(false);
     }
   });
-  it('html: every external src/href is relative or the pre-existing fonts hosts', () => {
-    const ext = [...html.matchAll(/\b(?:src|href)="(https?:[^"]+)"/g)].map((m) => m[1]);
-    const rootExt = [...rootHtml.matchAll(/\b(?:src|href)="(https?:[^"]+)"/g)].map((m) => m[1]);
-    expect(ext.sort()).toEqual(rootExt.sort());
+  it('html: no external src/href at all (everything is served from the app origin)', () => {
+    const ext = [...html.matchAll(/\b(?:src|href)\s*=\s*["']?((?:https?:)?\/\/[^"'\s>]+)/gi)].map((m) => m[1]);
+    expect(ext).toEqual([]);
+    expect(html).not.toMatch(/googleapis|gstatic/i);
   });
 });

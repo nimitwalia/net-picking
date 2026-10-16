@@ -1,7 +1,7 @@
 // G3 offline (goes green only after stage S5). Fresh browser context with no prior service worker.
 // Rules: after the SW is active AND controlling the page, going offline and reloading still renders the app,
 // a tournament can be set up (4+ players, generate) and a score entered; the built entry JS is in cache
-// net-picking-next-v2; and no cache net-picking-next-v1 survives activation.
+// net-picking-next-v3; and no cache net-picking-next-v1 survives activation.
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -36,7 +36,7 @@ test('offline: SW controls the page, offline reload renders, tournament + score 
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller), { timeout: 30_000 }).toBe(true);
 
   // caches after activation. caches.open creates the key before addAll finishes, so wait for the
-  // real condition: entry JS and index.html both resolvable from net-picking-next-v2.
+  // real condition: entry JS and index.html both resolvable from net-picking-next-v3.
   const entry = entrySrc();
   const entryUrl = new URL(entry, base).href;
   const indexUrl = new URL('index.html', base).href;
@@ -45,20 +45,20 @@ test('offline: SW controls the page, offline reload renders, tournament + score 
       () =>
         page.evaluate(
           async ([e, i, root]) => {
-            if (!(await caches.keys()).includes('net-picking-next-v2')) return false;
-            const c = await caches.open('net-picking-next-v2');
+            if (!(await caches.keys()).includes('net-picking-next-v3')) return false;
+            const c = await caches.open('net-picking-next-v3');
             return !!(await c.match(e)) && (!!(await c.match(i)) || !!(await c.match(root)));
           },
           [entryUrl, indexUrl, base],
         ),
-      { timeout: 30_000, message: 'precache of entry JS and index.html in net-picking-next-v2' },
+      { timeout: 30_000, message: 'precache of entry JS and index.html in net-picking-next-v3' },
     )
     .toBe(true);
   const keys = await page.evaluate(() => caches.keys());
-  expect(keys).toContain('net-picking-next-v2');
+  expect(keys).toContain('net-picking-next-v3');
   expect(keys, 'no net-picking-next-v1 after activation').not.toContain('net-picking-next-v1');
-  const hit = await page.evaluate(async (u) => !!(await (await caches.open('net-picking-next-v2')).match(u)), entryUrl);
-  expect(hit, `entry JS ${entry} must be precached in net-picking-next-v2`).toBe(true);
+  const hit = await page.evaluate(async (u) => !!(await (await caches.open('net-picking-next-v3')).match(u)), entryUrl);
+  expect(hit, `entry JS ${entry} must be precached in net-picking-next-v3`).toBe(true);
 
   // offline reload
   await ctx.setOffline(true);

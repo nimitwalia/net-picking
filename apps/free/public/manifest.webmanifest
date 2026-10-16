@@ -1,6 +1,6 @@
 {
-  "name": "Net-picking Next",
-  "short_name": "Net-picking Next",
+  "name": "Net-picking",
+  "short_name": "Net-picking",
   "description": "Pickleball doubles tournament tracker",
   "start_url": "./",
   "scope": "./",

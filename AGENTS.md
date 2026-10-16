@@ -18,5 +18,5 @@ The live free app is `index.html` at the repo root, served by GitHub Pages from 
 ## Core behaviour that must not regress
 - Valid matches-per-player: N*m divisible by 4 (unless byes enabled) and m <= N-1.
 - Scheduler avoids repeated partners first, then back-to-back matches, then repeated opponents, in that priority (cost weights 20, 15, 3).
-- Win +3 / loss -1 per player. Scores must follow the chosen tie rule against the chosen points-to-play: `win2` (win by 2, identical to the original `checkScore`) or `golden` (golden point, the owner's house rule, default for new tournaments; see docs/specs/tie-rule.md). A saved tournament with no tie-rule value behaves as `win2`. Until the tie-rule item ships, the app is win by 2 only.
+- Win +3 / loss -1 per player. Scores must follow the chosen tie rule against the chosen points-to-play: `win2` (win by 2, identical to the original `checkScore`) or `golden` (golden point, the owner's house rule, default for new tournaments; see docs/specs/tie-rule.md). A saved tournament with no tie-rule value behaves as `win2`.
 - Courts offered = floor(players/4).

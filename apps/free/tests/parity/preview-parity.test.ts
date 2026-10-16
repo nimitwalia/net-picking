@@ -71,6 +71,12 @@ function stripMarkers(html: string): { out: string; badge: number; jsComments: s
   return { out, badge, jsComments, htmlComments };
 }
 
+const GOOGLE_LINES =
+  '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+  '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+  '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">\n';
+const LOCAL_FONTS_LINK = '<link rel="stylesheet" href="./src/fonts.css">';
+
 describe('index.html parity (root vs apps/free), outside the script block', () => {
   const live = rd(resolve(root, 'index.html'));
   const preview = rd(resolve(free, 'index.html'));
@@ -82,12 +88,16 @@ describe('index.html parity (root vs apps/free), outside the script block', () =
   once(live, regOld);
   once(live, '<meta name="apple-mobile-web-app-title" content="Net-picking">');
   once(live, '<title>Net-picking</title>');
+  once(live, GOOGLE_LINES);
   // Expected transform for the HTML/CSS outside the script: e) title and apple title only
   // (d, the badge, and the marker comments are stripped before comparing). a) key and b) sw registration
   // live inside the script and are checked separately below.
   const expected = maskScript(live)
     .replace('<meta name="apple-mobile-web-app-title" content="Net-picking">', `<meta name="apple-mobile-web-app-title" content="${TITLE}">`)
-    .replace('<title>Net-picking</title>', `<title>${TITLE}</title>`);
+    .replace('<title>Net-picking</title>', `<title>${TITLE}</title>`)
+    // Self-host fonts: ONLY these changes are allowed besides d) e): the three Google Fonts lines are removed
+    // and exactly one local stylesheet link is added in their place.
+    .replace(GOOGLE_LINES, LOCAL_FONTS_LINK + '\n');
 
   it('live file carries no PREVIEW text (so marker stripping cannot hide live content)', () => {
     expect(live).not.toContain('PREVIEW');
@@ -164,11 +174,20 @@ describe('sw.js parity', () => {
   once(live, oldC);
   once(live, oldF);
   it('equals root sw.js except prefix-built cache name and prefix-only deletion (comment lines ignored)', () => {
-    // S5 (offline): cache version may be v1 or v2 and FILES may additionally list the entry .js file;
+    // S5 (offline): cache version is normalised to v1 and FILES may additionally list the entry .js file;
     // those two differences are normalised away here and asserted in sw-s5.test.ts instead.
+    // Self-host fonts: the cache is v3 and the build-filled ASSETS list is merged into the install list;
+    // exactly these lines (comment, ASSETS, ALL) and the addAll(ALL) argument are normalised away. Nothing else.
+    expect(preview).toContain("const C=P+'v3';");
+    for (const re of [/^\/\/ Filled in at build time[^\n]*\n/m, /^const ASSETS=\/\*PRECACHE_START\*\/.*\/\*PRECACHE_END\*\/;\n/m,
+      /^const ALL=\[\.\.\.new Set\(\[\.\.\.FILES,\.\.\.ASSETS\]\)\];\n/m]) expect(preview).toMatch(re);
     const stripped = preview
       .replace(/^[ \t]*\/\/[^\n]*PREVIEW[^\n]*\r?\n/gm, '')
-      .replace("const C=P+'v2';", "const C=P+'v1';")
+      .replace(/^\/\/ Filled in at build time[^\n]*\n/m, '')
+      .replace(/^const ASSETS=\/\*PRECACHE_START\*\/.*\/\*PRECACHE_END\*\/;\n/m, '')
+      .replace(/^const ALL=\[\.\.\.new Set\(\[\.\.\.FILES,\.\.\.ASSETS\]\)\];\n/m, '')
+      .replace('c.addAll(ALL)', 'c.addAll(FILES)')
+      .replace("const C=P+'v3';", "const C=P+'v1';")
       .replace(/,'[^']*\.js'(?=[,\]])/g, '');
     expect(preview).toMatch(/^\/\/.*PREVIEW/);
     const expected = live

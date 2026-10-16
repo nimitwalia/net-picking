@@ -38,7 +38,7 @@ Each mutation was applied by hand, `vite build` re-run (the Playwright global se
 
 Applied to a throwaway copy of `apps/free/dist` (never to the repo), served with the Playwright harness
 (`NEW_BASE_OVERRIDE` for the old-vs-new specs; the upgrade and same-origin specs read `apps/free/dist` directly, so
-those were run against a temporarily edited dist and then rebuilt). Results are recorded in the cutover test report.
+those were run against a temporarily edited dist and then rebuilt). Run results (all mutations were caught; dist was restored afterwards): g: upgrade.spec (v1 never deleted), sw-behaviour x2; h: upgrade.spec (manifest step), built-root x2; i: upgrade.spec (`other-app-v1` gone), sw-behaviour x2, built-root (prefix); j (main.js key switched to the `_next_` key): retired-keys x2, built-root x2; k (Google Fonts link): same-origin, fonts-runtime (a), built-root x2.
 
 | # | Mutation | Expected to catch it |
 |---|----------|----------------------|

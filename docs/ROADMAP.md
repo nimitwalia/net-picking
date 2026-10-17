@@ -26,7 +26,7 @@ Constraints for all items below (historical, up to the cutover): the live app wa
 
 ## Phase 1: free v1 (finish line)
 Free v1 is done when the four items below have shipped (owner decision 2026-10-18). Byes, courts and withdrawal are not part of it; they moved to Phase 2. Do them in this order, one item per PR.
-- [ ] JSON export/import + undo last score
+- [ ] JSON export/import. See docs/specs/export-import.md. Undo is dropped from free v1 (owner decision 2026-10-18): per-match Update/Clear already exists and every destructive action asks first.
 - [ ] Rulebook reference screen: a link to the official rules page, plus an optional copy saved on the user's own device. The user uploads their own PDF, it is stored in the browser (IndexedDB) and is never uploaded, bundled or committed (copyright, see docs/RULES_SOURCES.md). The user types the edition label; the app does not read the PDF or derive any rules from it. First test how a stored PDF opens on iOS Safari (including the home-screen app) and Android Chrome; add a PDF-rendering library only if the native viewer is unusable
 - [ ] UI pass (free app only). Scope is layout and CSS, with no change to scheduling, scoring or standings logic and no colour change (colours, transitions and the premium look are Phase 2).
   - Move the four tabs (Setup, Matches, Board, Finals) into a docked bottom bar that stays on screen while the page scrolls. Hide it while a text field has focus so the phone keyboard never pushes it over the score boxes. Pad the bottom of every screen so the last row is not hidden behind it, and respect the safe-area inset on the installed home-screen app.
@@ -45,4 +45,4 @@ Free v1 is done when the four items below have shipped (owner decision 2026-10-1
 - Moved from free v1 (owner decision 2026-10-18), build once for Pro:
 - [ ] Optional byes (default off) and per-match ranking when byes are on. See docs/specs/byes-and-ranking.md
 - [ ] Courts: floor(N/4) offered, optional court names, rounds view with resting players
-- [ ] Player withdrawal and skip-next-match with undo. See docs/specs/withdrawal.md (depends on seeded RNG, byes, undo)
+- [ ] Player withdrawal and skip-next-match with undo. See docs/specs/withdrawal.md (depends on seeded RNG, byes and an undo mechanism, which free v1 no longer has)

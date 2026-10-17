@@ -47,3 +47,26 @@ those were run against a temporarily edited dist and then rebuilt). Run results 
 | i | `sw.js` deletes every cache that is not its own (drops the ownership check) | `tests/e2e/upgrade.spec.ts` (`other-app-v1` must survive); `tests/parity/sw-behaviour.test.ts` ("only deletes what it owns") |
 | j | the app also reads `pickleball_tournament_next_v1` | `tests/e2e/retired-keys.spec.ts`; `tests/parity/structure*.test.ts` |
 | k | a Google Fonts link or other third-party URL in `index.html` | `scripts/tests/built-root.test.ts`; `tests/e2e/same-origin.spec.ts`; `tests/e2e/fonts-runtime.spec.ts` (a) |
+
+## CI reliability: build-once and fail-loudly mutations
+
+Each mutation was applied by hand to the repo, only the named vitest file was run (`cd scripts && pnpm vitest run <file>`), and the change was reverted with `git checkout` (`git status` clean afterwards). All were caught.
+
+| # | Mutation | Test file | Result |
+|---|----------|-----------|--------|
+| a | `execFileSync('pnpm', ['--filter','@net-picking/free','build'])` added to `apps/free/tests/e2e/global-setup.ts` | `scripts/tests/no-build-in-tests.test.ts` | RED: "no scanned file spawns a build" names `apps/free/tests/e2e/global-setup.ts` |
+| b | `spawnSync('npx', ['vite','build'])` added to `apps/free/playwright.config.ts` | `no-build-in-tests.test.ts` | RED, names `apps/free/playwright.config.ts` |
+| c | `execSync('pnpm run build')` added to `scripts/tests/built-root.test.ts` | `no-build-in-tests.test.ts` | RED, names `scripts/tests/built-root.test.ts` |
+| d | stale check never fires (`if (false && newest.t > built)`) in `scripts/tests/require-dist.ts` | `scripts/tests/require-dist.test.ts` | RED: every "STALE when ... is newer than dist" case (7 sources) fails |
+| e | same mutation in `apps/free/tests/e2e/require-dist.ts` | `require-dist.test.ts` | RED: same 7 STALE cases fail |
+| f | missing check disabled (`if (false)`) in `scripts/tests/require-dist.ts` | `require-dist.test.ts` | RED: both MISSING cases, plus the "two copies stay in step" check |
+| g | root `package.json` test reordered to `pnpm -r test && pnpm --filter @net-picking/free build` | `scripts/tests/ci-build-order.test.ts` | RED: "builds apps/free first, then runs pnpm -r test, in that order" |
+| h | ci.yml build step deleted | `ci-build-order.test.ts` | RED: 3 tests (step exists/order, exactly one build, same `if:`) |
+| i | ci.yml build step moved after `pnpm -r test` | `ci-build-order.test.ts` | RED: 2 tests (order, exactly one build before test) |
+| j | ci.yml build step loses its `if:` | `ci-build-order.test.ts` | RED: "same if: condition" |
+| k | ci.yml `runs-on` changed to `ubuntu-latest` | `ci-build-order.test.ts` | RED: "still pins ubuntu-24.04" |
+| l | `requireFreshDist();` call removed from `global-setup.ts` | `ci-build-order.test.ts` | RED: "global-setup.ts imports and calls requireFreshDist" |
+
+Note on the helper tests: `requireFreshDist` computes the repo root from its own file location, so `require-dist.test.ts` copies each helper byte-for-byte into a temp tree at the same relative path and imports it from there. Missing, fresh, stale (by `utimes`) and fresh-after-refresh are tested without touching the real `apps/free/dist` or real sources.
+
+Upgrade poll (no automated test): the builder checked by hand that a forced failure of the poll in `tests/e2e/upgrade.spec.ts` reports the last observed worker and cache state (and the server request log) on timeout. That is a manual check, not covered by any test.

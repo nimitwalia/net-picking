@@ -5,8 +5,8 @@ import { buildSchedule, validMatchCounts, checkScore, standings as coreStandings
 const MODES={side:'Service points',rally:'Rally scoring'};
 // Tie at match point. A missing value (a tournament saved before this setting existed) reads as 'win2'.
 const tieOf=r=>r&&r.tie==='golden'?'golden':'win2';
-// Remembered default for NEW tournaments, kept on this device under its own key (never the tournament key, never a live-app key).
-const PREFS_KEY='pickleball_prefs_next_v1';
+// Remembered default for NEW tournaments, kept on this device under its own key (never the tournament key).
+const PREFS_KEY='pickleball_prefs_v1';
 const TIE_LABEL={golden:'Golden point',win2:'Win by 2 (deuce)'};
 function readTiePref(){try{const p=JSON.parse(localStorage.getItem(PREFS_KEY));return p&&(p.tie==='win2'||p.tie==='golden')?p.tie:null;}catch(e){return null;}}
 function writeTiePref(v){try{localStorage.setItem(PREFS_KEY,JSON.stringify({tie:v}));return true;}catch(e){return false;}}
@@ -15,8 +15,7 @@ let defaultSaved=false; // feedback shown after pressing "Make this my default"
 const ruleText=r=>`${MODES[r.mode]} · to ${r.to} · ${tieOf(r)==='golden'?'golden point':'win by 2'}`;
 
 /* ============ STATE ============ */
-// PREVIEW: separate storage key from the live app
-const KEY='pickleball_tournament_next_v1';
+const KEY='pickleball_tournament_v1';
 function fresh(){return {tab:'setup',playersText:'',m:null,players:[],matches:[],stats:null,finals:null,lbAt:0,cfg:{mode:'side',to:11,tie:defaultTie()},rules:null,fcfg:null,tieSwap:false};}
 let S=fresh();
 let D={}; // unsaved score drafts, keyed by 'm<i>' or 'f'
@@ -480,5 +479,4 @@ document.addEventListener('change',e=>{
 
 try{['800 60px "Bricolage Grotesque"','700 30px "DM Sans"','500 24px "DM Mono"'].forEach(f=>document.fonts.load(f).catch(()=>{}));}catch(e){}
 render();
-// PREVIEW: relative SW path, scope limited to this app's directory
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(function(){});}

@@ -3,7 +3,7 @@
 Project: Net-picking, a pickleball tournament app. See docs/PLAN.md and docs/ROADMAP.md.
 
 ## Current state
-The live free app is `index.html` at the repo root, served by GitHub Pages from `main`. Do NOT move or rename it, or `sw.js`, the manifest or the icons, unless the roadmap item says so. Moving them breaks the live URL and installed home-screen apps.
+The live free app is `apps/free`, built by GitHub Actions and published at the site root (https://nimitwalia.github.io/net-picking/). The old single-file app exists only in git, at tag `legacy-final`. Do NOT move or rename `sw.js`, the manifest or the icons (now `apps/free/public/sw.js`, `apps/free/public/manifest.webmanifest`, `apps/free/public/icon-*.png`, `apple-touch-icon.png`), or the live URL and installed home-screen apps break. The saved tournament lives in `localStorage` key `pickleball_tournament_v1`; keep it and the cache name scheme (`net-picking-v<n>`) stable.
 
 ## Rules
 1. Work on ONE roadmap item at a time. Do not start the next without being asked.

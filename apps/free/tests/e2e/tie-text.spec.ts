@@ -3,7 +3,7 @@
 // (minus data-tie-ui) is unchanged from the original root app.
 import { expect, test } from '@playwright/test';
 import { HINT, WIN2_RE, attrText, enter, generate, openApp, pickTie, tab, textNoTieUi, toFinalsTab } from './tie-harness';
-import { NAMES, openPage, selectWin2, saveScore, setup, startRootServer, views, type Scn } from './harness';
+import { NAMES, openPage, selectWin2, saveScore, setup, startLegacyServer, views, type Scn } from './harness';
 
 const CANVAS_SPY = `(() => {
   window.__canvasText = [];
@@ -122,7 +122,7 @@ test('win2 Setup shows the same exact hint and the original "Win by 2." scoring 
 // ---- win2 text unchanged from the original app (data-tie-ui dropped by views()) ----
 test('win2: Setup, Matches, errors, Finals text equals the original root app', async ({ browser }) => {
   test.setTimeout(120_000);
-  const root = await startRootServer();
+  const root = await startLegacyServer();
   try {
     const run = async (base: string) => {
       const { ctx, page } = await openPage(browser, base, 7);
@@ -152,7 +152,7 @@ test('win2: Setup, Matches, errors, Finals text equals the original root app', a
         return out;
       } finally { await ctx.close(); }
     };
-    const oldBase = root.base, newBase = process.env.PREVIEW_BASE_URL!;
+    const oldBase = root.base, newBase = process.env.APP_BASE_URL!;
     const o = await run(oldBase);
     const n = await run(newBase);
     for (const k of Object.keys(o)) expect(n[k], k).toBe(o[k]);

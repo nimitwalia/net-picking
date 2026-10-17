@@ -6,8 +6,8 @@ import vm from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import { checkScore, standings, tieAtCutoff, type PlayedMatch } from './index';
 
-// Extract the original functions from index.html (read only) by brace-matching their source text.
-const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../index.html'), 'utf8');
+// Extract the original functions from index.html (legacy fixture, read only) by brace-matching their source text.
+const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../apps/free/tests/fixtures/legacy/index.html'), 'utf8');
 function extract(name: string): string {
   const start = html.indexOf(`function ${name}(`);
   if (start < 0) throw new Error(`function ${name} not found in index.html`);

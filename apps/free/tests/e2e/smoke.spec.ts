@@ -21,13 +21,13 @@ async function save(page: Page, id: string, a: number, b: number) {
 
 for (const TO of [7, 11, 15, 21]) {
   test(`full tournament flow at 360px, play to ${TO}`, async ({ page }) => {
-    const base = process.env.PREVIEW_BASE_URL!;
-    expect(base).toContain('/net-picking/next/');
+    const base = process.env.APP_BASE_URL!;
+    expect(new URL(base).pathname, 'app is served at the site root').toBe('/');
     await page.goto(base);
 
-    // PREVIEW badge and sub-path service worker scope.
-    await expect(page.getByText('PREVIEW', { exact: true })).toBeVisible();
-    await expect(page).toHaveTitle('Net-picking Next');
+    // No PREVIEW badge after the cutover; live title.
+    await expect(page.getByText('PREVIEW')).toHaveCount(0);
+    await expect(page).toHaveTitle('Net-picking');
     await noOverflow(page, 'setup (empty)');
 
     // Setup: players, points to play.
@@ -88,22 +88,23 @@ for (const TO of [7, 11, 15, 21]) {
     await expect(page.locator('.champ')).toContainText('Champions');
     await expect(page.locator('.champ .sc')).toHaveText(`${TO} – ${TO - 2}`);
     await noOverflow(page, 'finals (champions)');
-    await expect(page).toHaveTitle('Net-picking Next');
+    await expect(page).toHaveTitle('Net-picking');
 
-    // Storage isolation.
+    // Storage: live key only, no preview key.
     const st = await page.evaluate(() => ({
       live: localStorage.getItem('pickleball_tournament_v1'),
       next: localStorage.getItem('pickleball_tournament_next_v1'),
     }));
-    expect(st.live).toBeNull();
-    expect(st.next).not.toBeNull();
+    expect(st.live).not.toBeNull();
+    expect(st.next).toBeNull();
 
-    // Service worker scope is inside the sub-path (and exactly the app directory).
+    // Service worker scope is the site root.
     await page.waitForFunction(() => navigator.serviceWorker.getRegistration().then((r) => !!r));
     const scope = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())!.scope);
     expect(scope).toBe(base);
-    expect(new URL(scope).pathname.startsWith('/net-picking/next/')).toBe(true);
+    expect(new URL(scope).pathname).toBe('/');
     const caches = await page.evaluate(() => globalThis.caches.keys());
     expect(caches).not.toContain('net-picking-v1');
+    expect(caches.filter((k) => k.startsWith('net-picking-next-'))).toEqual([]);
   });
 }

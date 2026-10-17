@@ -4,10 +4,10 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { blankLiterals, indexPath, parseImports, readMain, root, stripComments } from './src-helpers';
+import { blankLiterals, indexPath, legacyDir, parseImports, readMain, stripComments } from './src-helpers';
 
 const html = readFileSync(indexPath, 'utf8');
-const rootHtml = readFileSync(resolve(root, 'index.html'), 'utf8');
+const rootHtml = readFileSync(resolve(legacyDir, 'index.html'), 'utf8');
 const MODULE_TAG = '<script type="module" src="./src/main.js"></script>';
 
 describe('S1: module entry', () => {
@@ -19,8 +19,8 @@ describe('S1: module entry', () => {
   it('the module tag is where the inline script was in the root file (end of body)', () => {
     expect(rootHtml).toMatch(/<\/script>\s*<\/body>/);
     expect(html).toMatch(/<script type="module" src="\.\/src\/main\.js"><\/script>\s*<\/body>/);
-    // same prefix before the script: everything before it is the root's prefix (modulo the d/e changes already
-    // asserted in preview-parity.test.ts), so just check the nodes that precede it are the same.
+    // same prefix before the script: everything before it is the root's prefix (modulo the font-link change already
+    // asserted in cutover-parity.test.ts), so just check the nodes that precede it are the same.
     const before = (h: string, mark: string) => h.slice(0, h.indexOf(mark)).match(/<(main|nav|header|div id="view")[ >]/g);
     expect(before(html, '<script')).toEqual(before(rootHtml, '<script'));
   });
@@ -29,12 +29,13 @@ describe('S1: module entry', () => {
   });
 });
 
-describe('(c) storage key isolation', () => {
-  it('main.js uses the preview key and never the live key', () => {
+describe('(c) storage keys (live keys, no preview keys)', () => {
+  it('main.js uses the live key and never a _next_ key', () => {
     const main = readMain();
-    expect(main).toMatch(/const KEY='pickleball_tournament_next_v1';/);
-    expect(main).not.toContain('pickleball_tournament_v1');
-    expect(html).not.toContain('pickleball_tournament_v1');
+    expect(main).toMatch(/const KEY='pickleball_tournament_v1';/);
+    expect(main).not.toContain('pickleball_tournament_next_v1');
+    expect(main).not.toContain('pickleball_prefs_next_v1');
+    expect(html).not.toMatch(/_next_/);
     const keys = [...stripComments(main).matchAll(/localStorage\.(?:getItem|setItem|removeItem)\(\s*([^,)]+)/g)].map((m) => m[1].trim());
     expect(keys.length).toBeGreaterThan(0);
     for (const k of keys) expect(['KEY', 'PREFS_KEY'], 'only the KEY and PREFS_KEY constants are used for storage').toContain(k);

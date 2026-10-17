@@ -1,4 +1,4 @@
-// G1 golden master: the original root /index.html (oracle) and the apps/free build are driven through the
+// G1 golden master: the legacy fixture index.html (oracle) and the apps/free build are driven through the
 // same UI script with the same seeded Math.random and constant Date.now. Everything the user can read
 // (nav + Matches + Board + Finals text) and the persisted state must be identical.
 //
@@ -10,7 +10,7 @@
 // Every (N,m) is covered with every `to` and both modes appear for every `to`; every N sees both modes.
 import { expect, test, type Browser } from '@playwright/test';
 import {
-  NAMES, both, scriptedScore, saveScore, setup, startRootServer, tab, validM, views, saved,
+  NAMES, both, scriptedScore, saveScore, setup, startLegacyServer, tab, validM, views, saved,
   type Env, type Mode, type Scn, type Side,
 } from './harness';
 import type { Page } from '@playwright/test';
@@ -24,9 +24,9 @@ const POOL = 4;
 let env: Env;
 let closeRoot: () => Promise<void>;
 test.beforeAll(async () => {
-  const r = await startRootServer();
+  const r = await startLegacyServer();
   closeRoot = r.close;
-  env = { oldBase: r.base, newBase: process.env.NEW_BASE_OVERRIDE ?? process.env.PREVIEW_BASE_URL! };
+  env = { oldBase: r.base, newBase: process.env.NEW_BASE_OVERRIDE ?? process.env.APP_BASE_URL! };
 });
 test.afterAll(async () => { await closeRoot?.(); });
 

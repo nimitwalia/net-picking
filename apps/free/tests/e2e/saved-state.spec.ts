@@ -7,7 +7,7 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { NEW_KEY, OLD_KEY, openPage, saveScore, saved, startRootServer, tab, views, type Env } from './harness';
+import { NEW_KEY, OLD_KEY, openPage, saveScore, saved, startLegacyServer, tab, views, type Env } from './harness';
 
 const dir = resolve(import.meta.dirname, '../fixtures');
 const FIXTURES = readdirSync(dir).filter((f) => f.endsWith('.json')).sort();
@@ -15,9 +15,9 @@ const FIXTURES = readdirSync(dir).filter((f) => f.endsWith('.json')).sort();
 let env: Env;
 let closeRoot: () => Promise<void>;
 test.beforeAll(async () => {
-  const r = await startRootServer();
+  const r = await startLegacyServer();
   closeRoot = r.close;
-  env = { oldBase: r.base, newBase: process.env.NEW_BASE_OVERRIDE ?? process.env.PREVIEW_BASE_URL! };
+  env = { oldBase: r.base, newBase: process.env.NEW_BASE_OVERRIDE ?? process.env.APP_BASE_URL! };
 });
 test.afterAll(async () => { await closeRoot?.(); });
 

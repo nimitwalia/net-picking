@@ -1,11 +1,11 @@
 // Shared helpers for the tie-rule specs (written from docs/specs/tie-rule.md and the UI contract, not from main.js).
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 
-export const TOUR_KEY = 'pickleball_tournament_next_v1';
-export const PREFS_KEY = 'pickleball_prefs_next_v1';
+export const TOUR_KEY = 'pickleball_tournament_v1';
+export const PREFS_KEY = 'pickleball_prefs_v1';
 export const WIN2_RE = /win by 2|win-by-2|deuce/i;
 export const HINT = 'Golden point is a house rule. Official USA Pickleball scoring is win by 2 (Rule 15.C).';
-export const base = () => process.env.PREVIEW_BASE_URL!;
+export const base = () => process.env.APP_BASE_URL!;
 
 export interface Opened { ctx: BrowserContext; page: Page; errors: string[] }
 

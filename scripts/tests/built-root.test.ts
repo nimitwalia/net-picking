@@ -5,12 +5,13 @@
 // The words "next" / "Up next" in the UI and CSS class names are legitimate and are not matched.
 // The font licence file legitimately contains URLs and is excluded from the URL scan only (it is still scanned
 // for the identity strings).
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { requireFreshDist } from "./require-dist";
 
 const REPO = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const SCRIPT = join(REPO, "scripts", "assemble-site.mjs");
@@ -25,9 +26,7 @@ const TEXT = /\.(html|css|js|webmanifest|json|txt|svg|map)$/i;
 const textFiles = () => walk(out).filter((f) => TEXT.test(f)).map((f) => ({ rel: relative(out, f).split("\\").join("/"), text: readFileSync(f, "utf8") }));
 
 beforeAll(() => {
-  if (!existsSync(join(REPO, "apps/free/dist/index.html"))) {
-    execFileSync("pnpm", ["--filter", "@net-picking/free", "build"], { cwd: REPO, stdio: "inherit" });
-  }
+  requireFreshDist();
   tmpRoot = mkdtempSync(join(tmpdir(), "built-root-"));
   out = join(tmpRoot, "site");
   const r = spawnSync("node", [SCRIPT, out], { cwd: REPO, encoding: "utf8" });

@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
-import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
+import { requireFreshDist } from './require-dist';
 
 const free = resolve(import.meta.dirname, '../..');
 const dist = join(free, 'dist');
@@ -13,24 +13,8 @@ const TYPES: Record<string, string> = {
   '.webmanifest': 'application/manifest+json', '.json': 'application/json', '.css': 'text/css', '.woff2': 'font/woff2', '.txt': 'text/plain',
 };
 
-function newest(dir: string): number {
-  let t = 0;
-  for (const e of readdirSync(dir, { withFileTypes: true })) {
-    const p = join(dir, e.name);
-    t = Math.max(t, e.isDirectory() ? newest(p) : statSync(p).mtimeMs);
-  }
-  return t;
-}
-
-function ensureBuilt(): void {
-  const stale = !existsSync(join(dist, 'index.html')) ||
-    statSync(join(dist, 'index.html')).mtimeMs < Math.max(
-      statSync(join(free, 'index.html')).mtimeMs, newest(join(free, 'public')));
-  if (stale) execFileSync('pnpm', ['exec', 'vite', 'build'], { cwd: free, stdio: 'inherit' });
-}
-
 export default async function globalSetup(): Promise<() => Promise<void>> {
-  ensureBuilt();
+  requireFreshDist();
   const server: Server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
     let rel = decodeURIComponent(url.pathname.slice(1)) || 'index.html';

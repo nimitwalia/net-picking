@@ -2,10 +2,10 @@
 // icons and the self-hosted fonts under one net-picking-v<n> cache (n != 1), and on activation drops the old app
 // cache net-picking-v1 and retired net-picking-next-* caches while deleting nothing it does not own.
 import { describe, expect, it, beforeAll } from 'vitest';
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import vm from 'node:vm';
+import { requireFreshDist } from '../e2e/require-dist';
 
 const free = resolve(import.meta.dirname, '../..');
 const dist = resolve(free, 'dist');
@@ -38,12 +38,12 @@ async function runSw(initial: string[]) {
 
 let entry = '';
 beforeAll(() => {
-  execFileSync('pnpm', ['exec', 'vite', 'build'], { cwd: free, stdio: 'pipe' });
+  requireFreshDist(); // never builds; fails with a clear message if dist is missing or stale
   const html = readFileSync(resolve(dist, 'index.html'), 'utf8');
   const m = html.match(/<script[^>]*type="module"[^>]*\ssrc="([^"]+)"/) ?? html.match(/<script[^>]*\ssrc="([^"]+)"[^>]*type="module"/);
   if (!m) throw new Error('built dist/index.html has no module script src');
   entry = m[1].replace(/^\.\//, '');
-}, 120_000);
+});
 
 describe('service worker precache and cleanup', () => {
   it('built entry JS exists in dist and has a fixed, non-hashed file name', () => {

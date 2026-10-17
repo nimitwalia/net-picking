@@ -2,8 +2,8 @@
 // (byte for byte), there is no next/ directory, nothing is read from root files of the repo, and the script fails
 // loudly on a missing build, a missing required file, or any stray file.
 // Env var ASSEMBLE_ROOT overrides the repo root (default: derived from script location).
-// apps/free/dist is gitignored; beforeAll builds it (pnpm --filter @net-picking/free build) if absent.
-import { execFileSync, spawnSync } from "node:child_process";
+// apps/free/dist is gitignored and is NOT built here: beforeAll fails loudly if it is missing or stale (require-dist.ts).
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync,
@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { requireFreshDist } from "./require-dist";
 
 const REPO = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const SCRIPT = join(REPO, "scripts", "assemble-site.mjs");
@@ -48,11 +49,7 @@ function makeFixtureRoot(): string {
   return root;
 }
 
-beforeAll(() => {
-  if (!existsSync(join(DIST, "index.html"))) {
-    execFileSync("pnpm", ["--filter", "@net-picking/free", "build"], { cwd: REPO, stdio: "inherit" });
-  }
-}, 300_000);
+beforeAll(() => { requireFreshDist(); });
 afterAll(() => { for (const d of tmps) rmSync(d, { recursive: true, force: true }); });
 
 describe("assemble-site: happy path (real repo)", () => {

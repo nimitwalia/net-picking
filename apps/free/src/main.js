@@ -127,7 +127,13 @@ function viewSetup(){
     <textarea id="players" data-act="playersInput" placeholder="Nimit&#10;Divya">${esc(S.playersText)}</textarea>
     <div id="setupInfo">${setupInfoHtml()}</div></div>
     <div class="card"><label>Scoring for the matches</label><div class="rules" data-ns="cfg">${rulesInner(S.cfg,true)}</div></div>
-    <div id="setupRest">${setupRestHtml()}</div>`;
+    <div id="setupRest">${setupRestHtml()}</div>
+    <div class="card" id="rulesCard"><label>Rules</label>
+    <div class="rulelinks">
+    <a class="btn ghost rulelink" href="https://ebooks.usapickleball.org/books/USAP-Official-Rulebook/" target="_blank" rel="noopener noreferrer">Official rulebook (USA Pickleball)</a>
+    <a class="btn ghost rulelink" href="https://usapickleball.org/rules/" target="_blank" rel="noopener noreferrer">Rules updates and equipment manual</a>
+    </div>
+    <div class="hint">Opens in your browser and needs internet.</div></div>`;
 }
 
 const nmHtml=arr=>arr.map(n=>`<div class="n">${esc(n)}</div>`).join('<div class="amp">&amp;</div>');

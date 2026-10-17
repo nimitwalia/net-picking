@@ -26,7 +26,7 @@ Constraints for all items below (historical, up to the cutover): the live app wa
 
 ## Phase 1: free v1 (finish line)
 Free v1 is done when the three items below have shipped (owner decision 2026-10-18). Byes, courts and withdrawal are not part of it; they moved to Phase 2. JSON export/import and undo were cut from it (see Deferred below). Do them in this order, one item per PR.
-- [ ] Rulebook reference screen: a link to the official rules page, plus an optional copy saved on the user's own device. The user uploads their own PDF, it is stored in the browser (IndexedDB) and is never uploaded, bundled or committed (copyright, see docs/RULES_SOURCES.md). The user types the edition label; the app does not read the PDF or derive any rules from it. First test how a stored PDF opens on iOS Safari (including the home-screen app) and Android Chrome; add a PDF-rendering library only if the native viewer is unusable
+- [ ] Rulebook link (free app): two links to the official USA Pickleball pages, in a small Rules card on Setup. No rules text, no stored PDF. See docs/specs/rulebook-link.md. The earlier "upload your own PDF" idea is deferred (see below).
 - [ ] UI pass (free app only). Scope is layout and CSS, with no change to scheduling, scoring or standings logic and no colour change (colours, transitions and the premium look are Phase 2).
   - Move the four tabs (Setup, Matches, Board, Finals) into a docked bottom bar that stays on screen while the page scrolls. Hide it while a text field has focus so the phone keyboard never pushes it over the score boxes. Pad the bottom of every screen so the last row is not hidden behind it, and respect the safe-area inset on the installed home-screen app.
   - One consistent pill style for action buttons, at least 44px tall. The "Play to" tiles, stat tiles and inputs are selection tiles and fields, not action buttons, and keep their current shape.
@@ -38,6 +38,7 @@ Free v1 is done when the three items below have shipped (owner decision 2026-10-
 
 ### Deferred from free v1 (owner decision 2026-10-18)
 - JSON export/import and undo last score. Reason: a tournament is started and finished in one sitting, per-match Update/Clear already exists, and every destructive action asks first. Revisit only if a pilot session shows a real data-loss or scorer-handover moment. See docs/specs/export-import.md (status: deferred).
+- Rulebook PDF stored on the user's device (IndexedDB), with a typed edition label. Reason: heavy for a feature the group may never use; needs a real-device check of how a stored PDF opens on iOS Safari (including the home-screen app) and Android Chrome, and a PDF-rendering library if the native viewer is unusable. Copyright rules in docs/RULES_SOURCES.md still apply: the PDF is never committed, bundled or uploaded. Revisit only if the owner asks.
 
 ## Phase 2: pro (private repo)
 - [ ] Next.js + Supabase, Google + email sign-in

@@ -67,7 +67,9 @@ describe('no network calls added compared with main', () => {
   });
   it.skipIf(mainSrc === null)('no new http(s) URL in src or index.html compared with main', () => {
     const now = new Set([...urls(nc), ...urls(readFileSync(resolve(free, 'index.html'), 'utf8'))]);
-    const was = new Set([...urls(stripComments(mainSrc!)), ...urls(mainIndex!)]);
+    // docs/specs/rulebook-link.md: exactly these two outbound links on Setup, nothing broader
+    const was = new Set([...urls(stripComments(mainSrc!)), ...urls(mainIndex!),
+      'https://ebooks.usapickleball.org/books/USAP-Official-Rulebook/', 'https://usapickleball.org/rules/']);
     expect([...now].filter((u) => !was.has(u))).toEqual([]);
   });
   it('absolute guard (independent of main): no fetch, XHR, WebSocket, beacon or EventSource in src', () => {

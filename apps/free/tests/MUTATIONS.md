@@ -88,3 +88,14 @@ Applied by hand to a copy of `apps/free/dist` (never to `src/`; dist is gitignor
 | 9 | `min-height:44px` -> 30px in index.html | NOT caught: that rule is not the one for the links (no effect on link height) |
 | 10 | style forcing `a[href^="https://"]{height:30px}` | Invariant 4 (height) |
 | 11 | cache name `net-picking-v2` -> `-v3` in dist/sw.js | cache name test |
+
+### Rulebook allowlist is not over-broad (added when updating the older URL and parity guards)
+
+Applied by hand, reverted afterwards (`git checkout` of the file, dist rebuilt).
+
+| # | Mutation | Result |
+|---|----------|--------|
+| 12 | `src/main.js` gains `https://usapickleball.org/rules/extra` (a near-miss of an allowed URL) | RED: `structure.test.ts` "no new network URLs ..." and `structure-tie.test.ts` "no new http(s) URL ..." |
+| 13 | dist `main.js` gains `https://example.com/` | RED: `scripts/tests/built-root.test.ts` "no third-party http(s) URL ..." |
+| 14 | dist `main.js` link `href` changed to `https://usapickleball.org/rules/x` | RED: both `built-root.test.ts` URL tests |
+| 15 | `index.html` gains an extra CSS line `.extra{color:red}` | RED: `cutover-parity.test.ts` "outside the script block equals the old file ..." (only the two exact Rules card CSS lines are subtracted) |

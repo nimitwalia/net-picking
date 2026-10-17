@@ -114,16 +114,28 @@ test('upgrade: old installed app (v1 worker, v1 cache, saved tournament) -> new 
     // Like a user coming back to the app: close the tab and open it again, repeating until the new worker
     // has taken over (it deletes net-picking-v1 when it activates). No fixed sleeps.
     page.on('pageerror', (e) => errors.push(String(e)));
-    await expect.poll(async () => {
-      await page.close();
-      page = await freshPage(ctx, base);
-      page.on('pageerror', (e) => errors.push(String(e)));
-      const st = await page.evaluate(async () => {
-        const r = await navigator.serviceWorker.getRegistration();
-        return { keys: await caches.keys(), active: r?.active?.state ?? null, waiting: !!r?.waiting, installing: !!r?.installing, controlled: !!navigator.serviceWorker.controller };
-      });
-      return !st.keys.includes('net-picking-v1') && ownCache(st.keys).length > 0 && st.active === 'activated' && !st.waiting && !st.installing && st.controlled;
-    }, { timeout: 90_000, intervals: [500, 1000, 2000], message: 'new worker active and controlling, net-picking-v1 gone' }).toBe(true);
+    // The last observed state is kept so a timeout says what the worker and caches looked like (expect.poll's
+    // message is a fixed string, so the failure is rethrown with the state attached).
+    let last: unknown = 'poll callback never completed';
+    try {
+      await expect.poll(async () => {
+        await page.close();
+        page = await freshPage(ctx, base);
+        page.on('pageerror', (e) => errors.push(String(e)));
+        const st = await page.evaluate(async () => {
+          const r = await navigator.serviceWorker.getRegistration();
+          return { keys: await caches.keys(), active: r?.active?.state ?? null, waiting: !!r?.waiting, installing: !!r?.installing, controlled: !!navigator.serviceWorker.controller };
+        });
+        last = st;
+        return !st.keys.includes('net-picking-v1') && ownCache(st.keys).length > 0 && st.active === 'activated' && !st.waiting && !st.installing && st.controlled;
+      }, { timeout: 90_000, intervals: [500, 1000, 2000], message: 'new worker active and controlling, net-picking-v1 gone' }).toBe(true);
+    } catch (cause) {
+      throw new Error(
+        `new worker active and controlling, net-picking-v1 gone: timed out.\nlast observed state: ${JSON.stringify(last)}\n` +
+        `server request log (last 40 of ${server.log.length}): ${JSON.stringify(server.log.slice(-40))}`,
+        { cause },
+      );
+    }
     // one more reload under the new worker, then everything below is the new app
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#nav button');

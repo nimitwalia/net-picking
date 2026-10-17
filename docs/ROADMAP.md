@@ -20,6 +20,7 @@ Constraints for all items below (historical, up to the cutover): the live app wa
 ## Phase 0b: follow-up
 - [x] CI hygiene: pin workflow runners to ubuntu-24.04 (ubuntu-latest migrates to Ubuntu 26 from 2026-10-19) and scope Pages concurrency to the deploy job only
 - [x] Seeded/injectable RNG and clock in the scheduler; property tests with fixed seeds for no-repeat-partners and no-back-to-back; differential tests for checkScore and standings against the original index.html logic
+- [x] CI reliability: dist is built once before the tests (root `pnpm test` and a CI step); tests and Playwright global setup never build it and fail with a clear message if it is missing or stale (two concurrent `vite build` runs broke `pnpm -r test` on the PR #19 merge); the upgrade test's poll reports the last observed worker and cache state when it times out. The suspected cause of the upgrade-test timeout (old worker re-creating net-picking-v1 after the new worker deleted it) could not be reproduced, even with a legacy worker copy whose cache write was delayed 400 ms, so sw.js is unchanged.
 - [ ] CI time: the Playwright old-vs-new suite takes about 6.5 minutes (N=12 scenarios run all 800 scheduler attempts). If PR turnaround becomes a problem, move the N=12 scenarios to a manual or nightly job and keep N up to 9 on every PR.
 - Note: Scheduler heuristic gap: buildSchedule(8,7) leaves 4 repeated partners where 0 is possible; log gap vs lower bound for N=8..14. Not a blocker.
 

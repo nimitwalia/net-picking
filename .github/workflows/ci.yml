@@ -30,6 +30,8 @@ jobs:
       - if: steps.proj.outputs.has == 'true'
         run: pnpm -r typecheck
       - if: steps.proj.outputs.has == 'true'
+        run: pnpm --filter @net-picking/free build
+      - if: steps.proj.outputs.has == 'true'
         run: pnpm -r test
       - if: steps.proj.outputs.has == 'true'
         run: pnpm -r --if-present build

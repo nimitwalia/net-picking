@@ -107,8 +107,8 @@ function setupRestHtml(){
     h+=`</div>`;
     if(hasResults())h+=`<div class="note warn" style="margin-bottom:12px">Regenerating erases the ${doneCount()} result(s) already entered.</div>`;
     if(S.matches.length)h+=`<div class="hint" style="margin:0 0 12px">The current schedule uses ${esc(ruleText(S.rules))}. Regenerating applies the scoring chosen above. Before any score is saved, changing it above updates the current schedule straight away.</div>`;
-    h+=`<div class="row"><button class="btn" data-act="generate" ${mSel?'':'disabled'}>${S.matches.length?'Regenerate schedule':'Generate schedule'}</button>
-      ${S.matches.length?'<button class="btn ghost" data-act="tab" data-tab="matches">Back to matches</button>':''}</div>`;
+    h+=`<div class="genrow"><button class="btn block gen" data-act="generate" ${mSel?'':'disabled'}>${S.matches.length?'Regenerate schedule':'Generate schedule'}</button>
+      ${S.matches.length?'<button class="btn ghost block" data-act="tab" data-tab="matches">Back to matches</button>':''}</div>`;
   } else if(N>0&&N<4){
     h+=`<div class="note err">You need at least 4 players for doubles.</div>`;
   }

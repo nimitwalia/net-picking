@@ -133,7 +133,7 @@ function viewSetup(){
     <a class="btn ghost rulelink" href="https://ebooks.usapickleball.org/books/USAP-Official-Rulebook/" target="_blank" rel="noopener noreferrer">Official rulebook (USA Pickleball)</a>
     <a class="btn ghost rulelink" href="https://usapickleball.org/rules/" target="_blank" rel="noopener noreferrer">Rules updates and equipment manual</a>
     </div>
-    <div class="hint">Opens in your browser and needs internet.</div></div>`;
+    <div class="hint rulenote">Opens in your browser and needs internet.</div></div>`;
 }
 
 const nmHtml=arr=>arr.map(n=>`<div class="n">${esc(n)}</div>`).join('<div class="amp">&amp;</div>');

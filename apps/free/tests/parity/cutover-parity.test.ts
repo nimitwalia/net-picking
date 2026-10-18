@@ -1,3 +1,4 @@
+// UI pass: see UI_PASS_* below for the exact allowlist of intended CSS differences.
 // Parity tests after the 4d cutover: apps/free is now the LIVE app. It must stay identical to the old app
 // (the fixture copy of tag legacy-final in tests/fixtures/legacy) except for the owner-approved changes:
 //   - the inline script moved to src/main.js (a single module tag at the same position),
@@ -38,10 +39,51 @@ const GOOGLE_LINES =
   '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
   '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
   '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">\n';
-// The Rules card (docs/specs/rulebook-link.md) adds exactly these two CSS lines to index.html and nothing else outside the script.
+// The Rules card (docs/specs/rulebook-link.md) adds exactly these two CSS lines to index.html.
 const RULES_CARD_CSS =
   '.rulelinks{display:flex;flex-direction:column;gap:10px}\n' +
   '.rulelink{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;max-width:100%;text-align:center;text-decoration:none;overflow-wrap:anywhere}\n';
+// UI pass (docs/specs/ui-pass.md): layout and CSS only. Exact-string allowlist, one entry per intended difference.
+// Whole lines the UI pass ADDS (each must appear exactly once in index.html, then is removed before comparing):
+const UI_PASS_ADDED_LINES = [
+  '  --bar-h:61px;--bar-space:calc(var(--bar-h) + env(safe-area-inset-bottom,0px));\n',
+  'body:has(input:focus,textarea:focus,select:focus) nav{transform:translateY(calc(100% + 2px));pointer-events:none}\n',
+  '.rulenote{margin:10px 0 0;text-align:center}\n',
+  '#rulesCard{padding:16px}\n',
+  '.genrow{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}\n',
+  '.btn.gen{min-height:52px}\n',
+  '.defrow{margin-top:8px}\n',
+  '.defnote{margin:8px 0 0}\n',
+];
+// Lines the UI pass CHANGES: [exact new line, exact old line]. The new line must appear exactly once; it is
+// swapped back to the old line before comparing, so everything else on the line must be unchanged.
+const UI_PASS_CHANGED_LINES: Array<[string, string]> = [
+  ['html{-webkit-text-size-adjust:100%;scroll-padding-bottom:calc(var(--bar-space) + 12px)}\n', 'html{-webkit-text-size-adjust:100%}\n'],
+  ['main{max-width:760px;margin:0 auto;padding:18px 16px calc(48px + var(--bar-space))}\n', 'main{max-width:760px;margin:0 auto;padding:18px 16px 48px}\n'],
+  ['nav{position:fixed;left:0;right:0;bottom:0;z-index:10;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--bg);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));transition:none}\n',
+   'nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:20px}\n'],
+  ['nav button{border:0;background:transparent;color:var(--muted);min-height:44px;padding:10px 4px;border-radius:999px;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n',
+   'nav button{border:0;background:transparent;color:var(--muted);padding:10px 4px;border-radius:999px;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n'],
+  ['.btn{background:var(--cream);color:var(--on-cream);border:0;border-radius:999px;padding:13px 22px;font-weight:700;font-size:15px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-align:center}\n',
+   '.btn{background:var(--cream);color:var(--on-cream);border:0;border-radius:999px;padding:13px 22px;font-weight:700;font-size:15px}\n'],
+  ['.mcard{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px;margin-bottom:12px;scroll-margin-top:84px;scroll-margin-bottom:calc(var(--bar-space) + 12px)}\n',
+   '.mcard{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px;margin-bottom:12px;scroll-margin-top:84px}\n'],
+  ['.modal .box.dark .btn{background:var(--cream);color:var(--on-cream);text-decoration:none;display:inline-flex;text-align:center}\n',
+   '.modal .box.dark .btn{background:var(--cream);color:var(--on-cream);text-decoration:none;display:inline-block;text-align:center}\n'],
+];
+/** Undo the allowlisted UI-pass and Rules-card differences (each exact string exactly once) from the current index.html. */
+function withoutAllowedDifferences(html: string): string {
+  let h = html;
+  for (const l of [...UI_PASS_ADDED_LINES, ...RULES_CARD_CSS.split(/(?<=\n)/)]) {
+    once(h, l);
+    h = h.replace(l, '');
+  }
+  for (const [nw, od] of UI_PASS_CHANGED_LINES) {
+    once(h, nw);
+    h = h.replace(nw, od);
+  }
+  return h;
+}
 const LOCAL_FONTS_LINK = '<link rel="stylesheet" href="./src/fonts.css">';
 
 describe('index.html parity (legacy fixture vs apps/free), outside the script block', () => {
@@ -56,8 +98,7 @@ describe('index.html parity (legacy fixture vs apps/free), outside the script bl
   });
   it('outside the script block equals the old file with only the font links swapped; script at the same position', () => {
     const expected = maskScript(old).replace(GOOGLE_LINES, LOCAL_FONTS_LINK + '\n');
-    once(now, RULES_CARD_CSS);
-    expect(maskScript(now.replace(RULES_CARD_CSS, '')) === expected, 'apps/free/index.html drifted from the old app beyond the allowed changes').toBe(true);
+    expect(maskScript(withoutAllowedDifferences(now)) === expected, 'apps/free/index.html drifted from the old app beyond the allowed changes').toBe(true);
   });
   it('title and apple-mobile-web-app-title are "Net-picking"; no PREVIEW text, badge or marker comment anywhere', () => {
     expect(now).toMatch(/<title>Net-picking<\/title>/);

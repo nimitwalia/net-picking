@@ -54,7 +54,8 @@ describe('(d) imports and network', () => {
   });
   it('no new network URLs or network APIs in main.js or index.html (only the pre-existing Google Fonts link)', () => {
     const urls = (s: string) => new Set([...s.matchAll(/https?:\/\/[^\s"'<>)`]+/g)].map((m) => m[0]));
-    const allowed = urls(rootHtml);
+    // docs/specs/rulebook-link.md: exactly these two outbound links on Setup, nothing broader
+    const allowed = new Set([...urls(rootHtml), 'https://ebooks.usapickleball.org/books/USAP-Official-Rulebook/', 'https://usapickleball.org/rules/']);
     for (const u of [...urls(html), ...urls(main)]) expect(allowed.has(u), `new URL ${u}`).toBe(true);
     const code = blankLiterals(nc);
     for (const api of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'sendBeacon']) {

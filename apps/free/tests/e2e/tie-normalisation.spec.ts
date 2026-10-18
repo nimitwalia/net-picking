@@ -15,10 +15,16 @@ async function tieUi(page: Page): Promise<{ count: number; tops: string[] }> {
     return { count: all.length, tops };
   });
 }
+async function rulesCards(page: Page): Promise<number> {
+  return page.evaluate(() => document.querySelectorAll('#rulesCard').length);
+}
 async function viewHtmlWithoutTieUi(page: Page): Promise<string> {
   return page.evaluate(() => {
     const v = document.getElementById('view')!.cloneNode(true) as HTMLElement;
     v.querySelectorAll('[data-tie-ui]').forEach((e) => e.remove());
+    // The Rules card (docs/specs/rulebook-link.md) exists only in the new app, only on Setup, exactly once.
+    // Removed by id, narrowly; its presence is pinned in the test below and by rulebook-link.spec.ts.
+    v.querySelectorAll('#rulesCard').forEach((e) => e.remove());
     return v.innerHTML;
   });
 }
@@ -46,18 +52,22 @@ test('exact data-tie-ui inventory per view (new app) and DOM equality with the o
       u = await tieUi(N.page);
       expect(u.count, 'setup (empty)').toBe(SETUP_COUNT);
       expect(u.tops.map((t) => t.toLowerCase())).toEqual(SETUP_TOPS.map((t) => t.toLowerCase()));
+      expect(await rulesCards(O.page), 'old app has no Rules card').toBe(0);
+      expect(await rulesCards(N.page), 'Rules card on Setup (empty), exactly once').toBe(1);
       await N.page.click('[data-ns="cfg"] button[data-k="tie"][data-v="win2"]');
       await grab('setup-empty');
 
       await setup(O.page, SCN); await setup(N.page, SCN);
       await tab(O.page, 'setup'); await tab(N.page, 'setup');
       expect((await tieUi(N.page)).count, 'setup (schedule)').toBe(SETUP_COUNT);
+      expect(await rulesCards(N.page), 'Rules card on Setup (schedule), exactly once').toBe(1);
       await grab('setup-schedule');
       for (const t of ['matches', 'board'] as const) {
         // board is disabled until a score exists
         if (t === 'board') { await tab(O.page, 'matches'); await tab(N.page, 'matches'); for (const p of [O.page, N.page]) await saveScore(p, 'm0', 11, 4); }
         await tab(O.page, t); await tab(N.page, t);
         expect(await tieUi(N.page), `${t} view has no tie-ui`).toEqual({ count: 0, tops: [] });
+        expect(await rulesCards(N.page), `${t} view has no Rules card`).toBe(0);
         await grab(t);
       }
       await tab(O.page, 'matches'); await tab(N.page, 'matches');

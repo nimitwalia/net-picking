@@ -16,7 +16,10 @@ import { requireFreshDist } from "./require-dist";
 const REPO = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const SCRIPT = join(REPO, "scripts", "assemble-site.mjs");
 const LICENCES = "THIRD-PARTY-FONT-LICENSES.txt";
+// docs/specs/rulebook-link.md allows exactly two outbound URLs, as plain links on Setup (never fetched or cached).
+const RULEBOOK_URLS = ["https://ebooks.usapickleball.org/books/USAP-Official-Rulebook/", "https://usapickleball.org/rules/"];
 const ALLOWED_URL = /^http:\/\/www\.w3\.org\/2000\/svg$/;
+const isRulebookUrl = (u: string) => RULEBOOK_URLS.includes(u);
 
 let tmpRoot: string;
 let out: string;
@@ -51,7 +54,7 @@ describe("built site root", () => {
           // protocol-relative URL: only flag if it looks like a host, not a regex/comment fragment
           if (!/^\/\/[a-z0-9-]+(\.[a-z0-9-]+)+(\/|$)/i.test(m[0])) continue;
         }
-        if (!ALLOWED_URL.test(m[0])) found.push(`${rel}: ${m[0]}`);
+        if (!ALLOWED_URL.test(m[0]) && !isRulebookUrl(m[0])) found.push(`${rel}: ${m[0]}`);
       }
     }
     expect(found).toEqual([]);
@@ -60,7 +63,9 @@ describe("built site root", () => {
   it("html has no external src/href/@import/url() references", () => {
     for (const { rel, text } of textFiles()) {
       if (rel === LICENCES) continue;
-      expect(text, rel).not.toMatch(/\b(?:src|href)\s*=\s*["']?(?:https?:)?\/\/(?!www\.w3\.org)/i);
+      // the rulebook-link spec's two anchors are the only href=https allowed; remove exactly those attributes first
+      const scan = RULEBOOK_URLS.reduce((t, u) => t.split(`href="${u}"`).join(""), text);
+      expect(scan, rel).not.toMatch(/\b(?:src|href)\s*=\s*["']?(?:https?:)?\/\/(?!www\.w3\.org)/i);
       expect(text, rel).not.toMatch(/@import\s+(?:url\()?\s*["']?(?:https?:)?\/\//i);
       expect(text, rel).not.toMatch(/url\(\s*["']?(?:https?:)?\/\//i);
       expect(text, rel).not.toMatch(/googleapis|gstatic/i);

@@ -77,9 +77,9 @@ function rulesInner(c,withDefault){
     +`<button data-tie-ui="golden" class="${tieOf(c)==='golden'?'on':''}" data-act="rule" data-k="tie" data-v="golden">Golden point</button>`
     +`<button data-tie-ui="win2" class="${tieOf(c)==='win2'?'on':''}" data-act="rule" data-k="tie" data-v="win2">Win by 2 (deuce)</button></div>`
     +`<p class="hint" data-tie-ui="hint">Golden point is a house rule. Official USA Pickleball scoring is win by 2 (Rule 15.C).</p>`
-    +(withDefault?`<div data-tie-ui="default-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px">`
-      +`<button data-tie-ui="default" data-act="makeDefault">${defaultSaved?'Default saved':'Make this my default'}</button>`
-      +`<span class="hint" data-tie-ui="default-note" style="margin:0">${defaultSaved?'Saved as default for new tournaments. ':''}Default for new tournaments: ${defaultTie()==='golden'?'Golden point':'not golden point'}</span></div>`:'');
+    +(withDefault?`<div data-tie-ui="default-row" class="defrow">`
+      +`<button data-tie-ui="default" class="btn ghost" data-act="makeDefault" ${tieOf(c)===defaultTie()?'disabled':''}>${tieOf(c)===defaultTie()?'Default saved':'Make this my default'}</button></div>`
+      +`<p class="hint defnote" data-tie-ui="default-note">${defaultSaved?'Saved as default for new tournaments. ':''}Default for new tournaments: ${defaultTie()==='golden'?'Golden point':'not golden point'}</p>`:'');
 }
 
 function setupInfoHtml(){

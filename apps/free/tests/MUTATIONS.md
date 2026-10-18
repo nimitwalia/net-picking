@@ -99,3 +99,33 @@ Applied by hand, reverted afterwards (`git checkout` of the file, dist rebuilt).
 | 13 | dist `main.js` gains `https://example.com/` | RED: `scripts/tests/built-root.test.ts` "no third-party http(s) URL ..." |
 | 14 | dist `main.js` link `href` changed to `https://usapickleball.org/rules/x` | RED: both `built-root.test.ts` URL tests |
 | 15 | `index.html` gains an extra CSS line `.extra{color:red}` | RED: `cutover-parity.test.ts` "outside the script block equals the old file ..." (only the two exact Rules card CSS lines are subtracted) |
+
+## UI pass item: mutations run, with real results
+
+Each mutation was applied by hand to `apps/free/index.html` or `apps/free/src/main.js`, `vite build` re-run, `playwright test ui-pass` run, then the file restored (`git status` clean for `apps/free/src` and `index.html` afterwards, dist rebuilt from the clean source). Counts are failures in `tests/e2e/ui-pass.spec.ts` (26 tests).
+
+| # | Mutation | Failing tests |
+|---|----------|---------------|
+| M1 | `nav{position:fixed;` -> `position:static;` | Inv 1/2 x3 (setup 24 players, setup with schedule, matches), Inv 3 textarea/select/input, Inv 4 every following card, Inv 5 x2 (7 failed) |
+| M2 | focus rule emptied (`body:has(...) nav{}`) | Inv 3 textarea/select/input (1) |
+| M3 | focus hides with `display:none` instead of transform | Inv 3 main test and "not display:none / visibility:hidden" (2) |
+| M4 | `scroll-margin-bottom` on `.mcard` and `scroll-padding-bottom` on `html` removed | NOT caught by the first version of the spec (0 failed): the app scrolls the next card to the top, so only the page bottom padding mattered. Added the "Invariant 4 (scroll padding)" test (focus a Save score button far below, `scrollIntoView({block:'nearest'})`); with it, M4 fails (1) |
+| M5 | bar `z-index:9999` (above modals) | Inv 5 confirm modal and image modal (2) |
+| M6 | `.btn` `min-height:44px` removed | Inv 6 all action buttons (1) |
+| M7 | `.btn.gen` `min-height` 52 -> 44 | Inv 6 Generate/Regenerate (1) |
+| M8 | label "Default saved" misspelt in `main.js` | Inv 7 states 1-4 and the reload test (5) |
+| M9 | `class="btn ghost block"` of Back to matches replaced by `data-x="1"` | Inv 8 runtime and static, Inv 6 Back to matches (3) |
+| M10 | `--cream:#f4ecd8` -> `#f4ecd9` | Inv 10 (1) |
+| M11 | `.rulenote` `text-align:center` -> `left` | Inv 11 (1) |
+| M12 | `main` bottom padding back to `48px` | Inv 1/2 matches, Inv 4 (2) |
+| M13 | `nav button` `min-height:44px` removed | Inv 1/2 x3 (the bar's height changes, tabs under 44px) (3) |
+| M14 | `#rulesCard{padding:16px 16px 40px}` | Inv 11 (1) |
+
+Not mutation-tested: Inv 6 "Play-to tiles / toggles unchanged" (it asserts current shape only), the static scan on `index.html` (no unclassed button there to mutate), the safe-area inset and the phone keyboard (Playwright cannot emulate either).
+
+## UI pass item: edits to existing tests (all narrow, nothing loosened)
+
+- `tests/parity/cutover-parity.test.ts`: the old single `RULES_CARD_CSS` allowance became exact lists, `UI_PASS_ADDED_LINES` (lines that must appear exactly once and are removed before comparing) and `UI_PASS_CHANGED_LINES` (new line must appear exactly once, is swapped back to the old line). Everything else must still equal the old file.
+- `tests/e2e/tie-normalisation.spec.ts`: `SETUP_TOPS` splits the old "Make this my default / Default for new tournaments" element into the row ("Default saved" for a new tournament) and the note; the count stays 8. `UI_PASS_MARKUP` maps the three new Generate-row opening tags back to the old ones on the new app's HTML only.
+- `tests/baselines/rulebook-baseline.json`: regenerated with `pnpm regen:rulebook-baseline` (0 text runs added, 0 removed; only the `note` field changed).
+- Regenerate the fixture: `pnpm --filter @net-picking/free build && pnpm regen:rulebook-baseline`.

@@ -182,6 +182,27 @@ test.describe('Invariant 4: after saving a score the next match is not under the
   });
 });
 
+test.describe('Invariant 4 (scroll padding): focus scrolling and scrollIntoView stop above the bar', () => {
+  test('focusing a button far below, and scrollIntoView({block:"nearest"}) on a match card, never leave it under the bar', async ({ browser }) => {
+    const { ctx, page } = await openApp(browser);
+    try {
+      await generate(page, { n: 12, m: 4, names: TWELVE });
+      await tab(page, 'matches');
+      await blur(page);
+      for (const id of ['m5', 'm9']) {
+        await toTop(page);
+        await page.locator(`button[data-act="saveScore"][data-id="${id}"]`).focus();
+        const r = await page.evaluate((i) => ({ b: document.querySelector(`button[data-act="saveScore"][data-id="${i}"]`)!.getBoundingClientRect().bottom, navTop: document.getElementById('nav')!.getBoundingClientRect().top }), id);
+        expect(r.b, `focused Save score of ${id} ends above the bar`).toBeLessThanOrEqual(r.navTop);
+        await blur(page);
+        await toTop(page);
+        const c = await page.evaluate((k) => { const el = document.querySelectorAll('.mcard')[k] as HTMLElement; el.scrollIntoView({ block: 'nearest' }); const b = el.getBoundingClientRect(); return { b: b.bottom, navTop: document.getElementById('nav')!.getBoundingClientRect().top }; }, Number(id.slice(1)));
+        expect(c.b, `scrollIntoView(nearest) of card ${id} ends above the bar`).toBeLessThanOrEqual(c.navTop);
+      }
+    } finally { await ctx.close(); }
+  });
+});
+
 test.describe('Invariant 5: modals are above the bar', () => {
   const topmostIsInside = (page: Page, modalSel: string, x: number, y: number) =>
     page.evaluate(({ s, x, y }) => { const e = document.elementFromPoint(x, y); return !!e && !!e.closest(s); }, { s: modalSel, x, y });

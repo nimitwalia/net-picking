@@ -70,3 +70,32 @@ Each mutation was applied by hand to the repo, only the named vitest file was ru
 Note on the helper tests: `requireFreshDist` computes the repo root from its own file location, so `require-dist.test.ts` copies each helper byte-for-byte into a temp tree at the same relative path and imports it from there. Missing, fresh, stale (by `utimes`) and fresh-after-refresh are tested without touching the real `apps/free/dist` or real sources.
 
 Upgrade poll (no automated test): the builder checked by hand that a forced failure of the poll in `tests/e2e/upgrade.spec.ts` reports the last observed worker and cache state (and the server request log) on timeout. That is a manual check, not covered by any test.
+
+## Rulebook link item: mutations run, with real results
+
+Applied by hand to a copy of `apps/free/dist` (never to `src/`; dist is gitignored), then `dist` was restored from a backup. Only `npx playwright test rulebook-link` (apps/free) was run. `git status` showed only the new test and fixture files afterwards. The baseline fixture `tests/baselines/rulebook-baseline.json` was generated from a throwaway `git worktree` of `main` at 09a6b54, built there.
+
+| # | Mutation (on built output) | Failing tests |
+|---|----------|---------------|
+| 1 | `rel="noopener noreferrer"` -> `noopener` | Invariant 1 (anchor attributes) |
+| 2 | second URL loses its trailing slash | Invariant 1 (x2), 2, 3, 4 (link not found), 5 (URLs only as spec) |
+| 3 | `<link rel="preconnect" href="https://usapickleball.org">` in index.html | Invariant 2 (hint in DOM), Invariant 5 (URLs only as spec) |
+| 4 | `dist/assets/rb.pdf` containing `%PDF-` | Invariant 5 (no PDF) |
+| 5 | rules sentence appended after the "Opens in your browser..." note | Invariant 5 (new prose), plus note-line tests (1, 3, 4). First version of the Invariant 5 test missed it (allowed any run containing the note); tightened to equality |
+| 6 | inline `fetch("https://example.com/x")` in index.html | Invariant 2 (foreign request) |
+| 7 | `target="_blank"` removed | Invariant 1 (anchor attributes) |
+| 8 | `body{min-width:500px}` | Invariant 4 (horizontal scroll) |
+| 9 | `min-height:44px` -> 30px in index.html | NOT caught: that rule is not the one for the links (no effect on link height) |
+| 10 | style forcing `a[href^="https://"]{height:30px}` | Invariant 4 (height) |
+| 11 | cache name `net-picking-v2` -> `-v3` in dist/sw.js | cache name test |
+
+### Rulebook allowlist is not over-broad (added when updating the older URL and parity guards)
+
+Applied by hand, reverted afterwards (`git checkout` of the file, dist rebuilt).
+
+| # | Mutation | Result |
+|---|----------|--------|
+| 12 | `src/main.js` gains `https://usapickleball.org/rules/extra` (a near-miss of an allowed URL) | RED: `structure.test.ts` "no new network URLs ..." and `structure-tie.test.ts` "no new http(s) URL ..." |
+| 13 | dist `main.js` gains `https://example.com/` | RED: `scripts/tests/built-root.test.ts` "no third-party http(s) URL ..." |
+| 14 | dist `main.js` link `href` changed to `https://usapickleball.org/rules/x` | RED: both `built-root.test.ts` URL tests |
+| 15 | `index.html` gains an extra CSS line `.extra{color:red}` | RED: `cutover-parity.test.ts` "outside the script block equals the old file ..." (only the two exact Rules card CSS lines are subtracted) |

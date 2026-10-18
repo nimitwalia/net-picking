@@ -109,7 +109,8 @@ export async function views(page: Page): Promise<string> {
   // none. Hide them while reading so the old-vs-new text comparison covers everything that existed before.
   return page.evaluate(() => {
     const st = document.createElement('style');
-    st.textContent = '[data-tie-ui]{display:none!important}';
+    // #rulesCard is the Rules card (docs/specs/rulebook-link.md), also new-app only and covered by rulebook-link.spec.ts.
+    st.textContent = '[data-tie-ui],#rulesCard{display:none!important}';
     document.head.appendChild(st);
     try { return (document.getElementById('nav') as HTMLElement).innerText + '\n----\n' + (document.getElementById('view') as HTMLElement).innerText; }
     finally { st.remove(); }

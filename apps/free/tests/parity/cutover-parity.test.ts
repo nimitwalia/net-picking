@@ -38,6 +38,10 @@ const GOOGLE_LINES =
   '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
   '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
   '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">\n';
+// The Rules card (docs/specs/rulebook-link.md) adds exactly these two CSS lines to index.html and nothing else outside the script.
+const RULES_CARD_CSS =
+  '.rulelinks{display:flex;flex-direction:column;gap:10px}\n' +
+  '.rulelink{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;max-width:100%;text-align:center;text-decoration:none;overflow-wrap:anywhere}\n';
 const LOCAL_FONTS_LINK = '<link rel="stylesheet" href="./src/fonts.css">';
 
 describe('index.html parity (legacy fixture vs apps/free), outside the script block', () => {
@@ -52,7 +56,8 @@ describe('index.html parity (legacy fixture vs apps/free), outside the script bl
   });
   it('outside the script block equals the old file with only the font links swapped; script at the same position', () => {
     const expected = maskScript(old).replace(GOOGLE_LINES, LOCAL_FONTS_LINK + '\n');
-    expect(maskScript(now) === expected, 'apps/free/index.html drifted from the old app beyond the allowed changes').toBe(true);
+    once(now, RULES_CARD_CSS);
+    expect(maskScript(now.replace(RULES_CARD_CSS, '')) === expected, 'apps/free/index.html drifted from the old app beyond the allowed changes').toBe(true);
   });
   it('title and apple-mobile-web-app-title are "Net-picking"; no PREVIEW text, badge or marker comment anywhere', () => {
     expect(now).toMatch(/<title>Net-picking<\/title>/);

@@ -9,7 +9,6 @@
 // reacts to, but the keyboard overlap and the inset spacing are for the owner's real-device check.
 // Tests never build dist (see require-dist.ts); global-setup serves apps/free/dist.
 import { expect, test, type Page } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { enter, generate, openApp, PREFS_KEY, storedRaw, tab, TOUR_KEY } from './tie-harness';
@@ -561,7 +560,9 @@ test.describe('Invariant 8: every button has a class', () => {
   });
 });
 
-test.describe('Invariant 10: no colour token value differs from main', () => {
+// The fixture tests/baselines/main-root-tokens.json is the pre-UI-pass snapshot of main's :root colour tokens. It is the
+// permanent baseline: main itself now contains the UI pass, so it can no longer be used as the reference.
+test.describe('Invariant 10: no colour token value differs from the pre-UI-pass baseline', () => {
   const parseRoot = (html: string): Record<string, string> => {
     const m = html.match(/:root\{([\s\S]*?)\n\}/);
     if (!m) throw new Error(':root block not found');
@@ -572,32 +573,19 @@ test.describe('Invariant 10: no colour token value differs from main', () => {
   const LAYOUT_ONLY = ['--bar-h', '--bar-space'];
   const frozen: Record<string, string> = JSON.parse(readFileSync(join(FREE, 'tests/baselines/main-root-tokens.json'), 'utf8')).tokens;
 
-  function mainTokens(): { tokens: Record<string, string>; from: string } {
-    for (const ref of ['main', 'origin/main']) {
-      try {
-        const html = execFileSync('git', ['show', `${ref}:apps/free/index.html`], { cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-        return { tokens: parseRoot(html), from: `git ${ref}` };
-      } catch { /* no such ref in this checkout (depth-1 CI) */ }
-    }
-    return { tokens: frozen, from: 'tests/baselines/main-root-tokens.json' };
-  }
-
-  test('the frozen copy of main\'s tokens still equals git main when git main is available', () => {
-    const m = mainTokens();
-    if (m.from.startsWith('git')) expect(frozen).toEqual(m.tokens);
+  test('the baseline fixture has at least 15 tokens', () => {
     expect(Object.keys(frozen).length).toBeGreaterThanOrEqual(15);
   });
 
-  test('every token on main has the same value now (static :root and computed on the page); only --bar-h/--bar-space are added', async ({ browser }) => {
-    const main = mainTokens();
+  test('every baseline token has the same value now (static :root and computed on the page); only --bar-h/--bar-space are added', async ({ browser }) => {
     const now = parseRoot(readFileSync(join(FREE, 'index.html'), 'utf8'));
-    for (const [k, v] of Object.entries(main.tokens)) expect(now[k], `${k} (main via ${main.from})`).toBe(v);
-    const extra = Object.keys(now).filter((k) => !(k in main.tokens));
+    for (const [k, v] of Object.entries(frozen)) expect(now[k], `${k} (baseline fixture)`).toBe(v);
+    const extra = Object.keys(now).filter((k) => !(k in frozen));
     expect(extra.sort(), 'new custom properties in :root').toEqual(LAYOUT_ONLY);
     const { ctx, page } = await openApp(browser);
     try {
-      const computed = await page.evaluate((names) => Object.fromEntries(names.map((n) => [n, getComputedStyle(document.documentElement).getPropertyValue(n).trim()])), Object.keys(main.tokens));
-      for (const [k, v] of Object.entries(main.tokens)) expect(computed[k], `computed ${k}`).toBe(v);
+      const computed = await page.evaluate((names) => Object.fromEntries(names.map((n) => [n, getComputedStyle(document.documentElement).getPropertyValue(n).trim()])), Object.keys(frozen));
+      for (const [k, v] of Object.entries(frozen)) expect(computed[k], `computed ${k}`).toBe(v);
     } finally { await ctx.close(); }
   });
 });

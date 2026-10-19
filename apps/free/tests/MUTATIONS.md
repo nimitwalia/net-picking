@@ -102,7 +102,7 @@ Applied by hand, reverted afterwards (`git checkout` of the file, dist rebuilt).
 
 ## UI pass item: mutations run, with real results
 
-Each mutation was applied by hand to `apps/free/index.html` or `apps/free/src/main.js`, `vite build` re-run, `playwright test ui-pass` run, then the file restored (`git status` clean for `apps/free/src` and `index.html` afterwards, dist rebuilt from the clean source). Counts are failures in `tests/e2e/ui-pass.spec.ts` (26 tests).
+Each mutation was applied by hand to `apps/free/index.html` or `apps/free/src/main.js`, `vite build` re-run, `playwright test ui-pass` run, then the file restored (`git status` clean for `apps/free/src` and `index.html` afterwards, dist rebuilt from the clean source). Counts are failures in `tests/e2e/ui-pass.spec.ts` (25 tests after the Invariant 10 fix below).
 
 | # | Mutation | Failing tests |
 |---|----------|---------------|
@@ -115,7 +115,7 @@ Each mutation was applied by hand to `apps/free/index.html` or `apps/free/src/ma
 | M7 | `.btn.gen` `min-height` 52 -> 44 | Inv 6 Generate/Regenerate (1) |
 | M8 | label "Default saved" misspelt in `main.js` | Inv 7 states 1-4 and the reload test (5) |
 | M9 | `class="btn ghost block"` of Back to matches replaced by `data-x="1"` | Inv 8 runtime and static, Inv 6 Back to matches (3) |
-| M10 | `--cream:#f4ecd8` -> `#f4ecd9` | Inv 10 (1) |
+| M10 | `--cream:#f4ecd8` -> `#f4ecd9` | Inv 10 (1). Compares against the frozen fixture `tests/baselines/main-root-tokens.json` (pre-UI-pass snapshot, the permanent baseline), not git `main` |
 | M11 | `.rulenote` `text-align:center` -> `left` | Inv 11 (1) |
 | M12 | `main` bottom padding back to `48px` | Inv 1/2 matches, Inv 4 (2) |
 | M13 | `nav button` `min-height:44px` removed | Inv 1/2 x3 (the bar's height changes, tabs under 44px) (3) |

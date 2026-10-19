@@ -43,6 +43,8 @@ export const NAMES5 = ['Asha', 'Ben', 'Chitra', 'Dev', 'Esha'];
 export async function generate(page: Page, o: { n?: number; m?: number; to?: number; tie?: 'golden' | 'win2'; names?: string[] } = {}): Promise<void> {
   const n = o.n ?? 4;
   const names = o.names ?? ['Asha', 'Ben', 'Chitra', 'Dev', 'Esha', 'Farah', 'Hana', 'Ivan'].slice(0, n);
+  // The docked tab bar hides while a field has focus; blur first, as a user does by tapping away.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.click('#nav button[data-tab="setup"]');
   await page.fill('#players', names.join('\n'));
   if (o.to) await page.click(`[data-ns="cfg"] button[data-k="to"][data-v="${o.to}"]`);

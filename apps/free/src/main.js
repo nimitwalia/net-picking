@@ -77,9 +77,9 @@ function rulesInner(c,withDefault){
     +`<button data-tie-ui="golden" class="${tieOf(c)==='golden'?'on':''}" data-act="rule" data-k="tie" data-v="golden">Golden point</button>`
     +`<button data-tie-ui="win2" class="${tieOf(c)==='win2'?'on':''}" data-act="rule" data-k="tie" data-v="win2">Win by 2 (deuce)</button></div>`
     +`<p class="hint" data-tie-ui="hint">Golden point is a house rule. Official USA Pickleball scoring is win by 2 (Rule 15.C).</p>`
-    +(withDefault?`<div data-tie-ui="default-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px">`
-      +`<button data-tie-ui="default" data-act="makeDefault">${defaultSaved?'Default saved':'Make this my default'}</button>`
-      +`<span class="hint" data-tie-ui="default-note" style="margin:0">${defaultSaved?'Saved as default for new tournaments. ':''}Default for new tournaments: ${defaultTie()==='golden'?'Golden point':'not golden point'}</span></div>`:'');
+    +(withDefault?`<div data-tie-ui="default-row" class="defrow">`
+      +`<button data-tie-ui="default" class="btn ghost" data-act="makeDefault" ${tieOf(c)===defaultTie()?'disabled':''}>${tieOf(c)===defaultTie()?'Default saved':'Make this my default'}</button></div>`
+      +`<p class="hint defnote" data-tie-ui="default-note">${defaultSaved?'Saved as default for new tournaments. ':''}Default for new tournaments: ${defaultTie()==='golden'?'Golden point':'not golden point'}</p>`:'');
 }
 
 function setupInfoHtml(){
@@ -107,8 +107,8 @@ function setupRestHtml(){
     h+=`</div>`;
     if(hasResults())h+=`<div class="note warn" style="margin-bottom:12px">Regenerating erases the ${doneCount()} result(s) already entered.</div>`;
     if(S.matches.length)h+=`<div class="hint" style="margin:0 0 12px">The current schedule uses ${esc(ruleText(S.rules))}. Regenerating applies the scoring chosen above. Before any score is saved, changing it above updates the current schedule straight away.</div>`;
-    h+=`<div class="row"><button class="btn" data-act="generate" ${mSel?'':'disabled'}>${S.matches.length?'Regenerate schedule':'Generate schedule'}</button>
-      ${S.matches.length?'<button class="btn ghost" data-act="tab" data-tab="matches">Back to matches</button>':''}</div>`;
+    h+=`<div class="genrow"><button class="btn block gen" data-act="generate" ${mSel?'':'disabled'}>${S.matches.length?'Regenerate schedule':'Generate schedule'}</button>
+      ${S.matches.length?'<button class="btn ghost block" data-act="tab" data-tab="matches">Back to matches</button>':''}</div>`;
   } else if(N>0&&N<4){
     h+=`<div class="note err">You need at least 4 players for doubles.</div>`;
   }
@@ -133,7 +133,7 @@ function viewSetup(){
     <a class="btn ghost rulelink" href="https://ebooks.usapickleball.org/books/USAP-Official-Rulebook/" target="_blank" rel="noopener noreferrer">Official rulebook (USA Pickleball)</a>
     <a class="btn ghost rulelink" href="https://usapickleball.org/rules/" target="_blank" rel="noopener noreferrer">Rules updates and equipment manual</a>
     </div>
-    <div class="hint">Opens in your browser and needs internet.</div></div>`;
+    <div class="hint rulenote">Opens in your browser and needs internet.</div></div>`;
 }
 
 const nmHtml=arr=>arr.map(n=>`<div class="n">${esc(n)}</div>`).join('<div class="amp">&amp;</div>');

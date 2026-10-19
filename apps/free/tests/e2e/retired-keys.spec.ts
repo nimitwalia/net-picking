@@ -61,9 +61,9 @@ test('a live-key tournament wins over planted _next_ values; saving the default 
     expect(await page.evaluate(() => document.body.innerText)).not.toContain(DISTINCT);
     await tab(page, 'setup');
     expect(await page.locator('#players').inputValue()).toContain('Asha');
-    await page.click('[data-ns="cfg"] button[data-k="tie"][data-v="golden"]');
+    await page.click('[data-ns="cfg"] button[data-k="tie"][data-v="win2"]');
     await page.click('button[data-act="makeDefault"]');
-    expect(JSON.parse((await storedRaw(page, PREFS_KEY))!)).toEqual({ tie: 'golden' });
+    expect(JSON.parse((await storedRaw(page, PREFS_KEY))!)).toEqual({ tie: 'win2' });
     expect(await storedRaw(page, OLD_PREFS)).toBe(PREFS);
     expect(await storedRaw(page, OLD_TOUR)).toBe(tour);
   } finally { await ctx.close(); }

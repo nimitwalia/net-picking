@@ -5,7 +5,8 @@
   "scripts": {
     "test": "pnpm --filter @net-picking/free build && pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "build": "pnpm -r --if-present build"
+    "build": "pnpm -r --if-present build",
+    "regen:rulebook-baseline": "node scripts/regen-rulebook-baseline.mjs"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

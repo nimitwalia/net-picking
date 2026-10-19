@@ -1,6 +1,10 @@
 // Item "Rulebook link (free app)". Written from docs/specs/rulebook-link.md, docs/RULES_SOURCES.md and AGENTS.md
 // only; links are found by href and visible label, never by implementation class names.
 // The tests never build dist (see require-dist.ts); global-setup serves apps/free/dist.
+// Baseline fixture (tests/baselines/rulebook-baseline.json): regenerate it from the build with
+//   pnpm --filter @net-picking/free build && pnpm regen:rulebook-baseline
+// (script: scripts/regen-rulebook-baseline.mjs). It lists every text run added or removed; review that list, because
+// each added run is prose the app now ships. Commit the fixture together with the change that caused it.
 import { expect, test, type Page, type Request } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';

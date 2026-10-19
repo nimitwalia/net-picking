@@ -29,10 +29,22 @@ async function viewHtmlWithoutTieUi(page: Page): Promise<string> {
   });
 }
 
+// UI pass (docs/specs/ui-pass.md section 4): the Generate row got layout classes. Exact-string allowlist, applied to the
+// NEW app's HTML only, mapping each new opening tag back to the old one. Nothing else (text, attributes, order) may differ.
+const UI_PASS_MARKUP: Array<[string, string]> = [
+  ['<div class="genrow">', '<div class="row">'],
+  ['<button class="btn block gen" data-act="generate">', '<button class="btn" data-act="generate">'],
+  ['<button class="btn ghost block" data-act="tab" data-tab="matches">', '<button class="btn ghost" data-act="tab" data-tab="matches">'],
+];
+const undoUiPassMarkup = (h: string) => UI_PASS_MARKUP.reduce((acc, [nw, od]) => acc.split(nw).join(od), h);
+
 const SCN: Scn = { n: 5, m: 4, to: 11, mode: 'side', seed: 31, idx: 1 };
-// Setup card: label, seg wrapper, 2 buttons, hint, default row, default button, default note = 8 elements, 4 top-level.
+// Setup card: label, seg wrapper, 2 buttons, hint, default row, default button, default note = 8 elements.
+// UI pass (docs/specs/ui-pass.md section 3): the default note is now a sibling AFTER the default row, so the top-level
+// elements are 5, not 4: row (button "Default saved" in a new empty tournament, where selected golden equals the
+// default golden) and note. Only that split is allowed; the count stays 8.
 const SETUP_COUNT = 8;
-const SETUP_TOPS = ['TIE AT MATCH POINT'.toLowerCase(), 'Golden point Win by 2 (deuce)', HINT, 'Make this my default Default for new tournaments: Golden point'];
+const SETUP_TOPS = ['TIE AT MATCH POINT'.toLowerCase(), 'Golden point Win by 2 (deuce)', HINT, 'Default saved', 'Default for new tournaments: Golden point'];
 // Final's card: label, seg wrapper, 2 buttons, hint = 5 elements, 3 top-level (no default button or note).
 const FINAL_COUNT = 5;
 
@@ -44,7 +56,7 @@ test('exact data-tie-ui inventory per view (new app) and DOM equality with the o
     const N = await openPage(browser, process.env.APP_BASE_URL!, SCN.seed);
     try {
       const dom: Record<string, [string, string]> = {};
-      const grab = async (k: string) => { dom[k] = [NORM(await viewHtmlWithoutTieUi(O.page)), NORM(await viewHtmlWithoutTieUi(N.page))]; };
+      const grab = async (k: string) => { dom[k] = [NORM(await viewHtmlWithoutTieUi(O.page)), undoUiPassMarkup(NORM(await viewHtmlWithoutTieUi(N.page)))]; };
 
       // Setup, empty (new app starts golden: the old app's DOM is the win2 one, so select win2 first; the
       // tie-ui elements themselves are what changes with the selection).

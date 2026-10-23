@@ -24,17 +24,19 @@ Constraints for all items below (historical, up to the cutover): the live app wa
 - [ ] CI time: the Playwright old-vs-new suite takes about 6.5 minutes (N=12 scenarios run all 800 scheduler attempts). If PR turnaround becomes a problem, move the N=12 scenarios to a manual or nightly job and keep N up to 9 on every PR.
 - Note: Scheduler heuristic gap: buildSchedule(8,7) leaves 4 repeated partners where 0 is possible; log gap vs lower bound for N=8..14. Not a blocker.
 
-## Phase 1: free v1 (finish line)
+## Phase 1: free v1 (finish line) - DONE 2026-10-23
+Shipped 2026-10-23: all three items are merged (PRs #26, #27, with the CI fix in #28) and the owner phone-tested them (iPhone installed app and Android Chrome, a full tournament, offline).
+
 Free v1 is done when the three items below have shipped (owner decision 2026-10-18). Byes, courts and withdrawal are not part of it; they moved to Phase 2. JSON export/import and undo were cut from it (see Deferred below). Do them in this order, one item per PR.
-- [ ] Rulebook link (free app): two links to the official USA Pickleball pages, in a small Rules card on Setup. No rules text, no stored PDF. See docs/specs/rulebook-link.md. The earlier "upload your own PDF" idea is deferred (see below).
-- [ ] UI pass (free app only). Scope is layout and CSS, with no change to scheduling, scoring or standings logic and no colour change (colours, transitions and the premium look are Phase 2).
+- [x] Rulebook link (free app): two links to the official USA Pickleball pages, in a small Rules card on Setup. No rules text, no stored PDF. See docs/specs/rulebook-link.md. The earlier "upload your own PDF" idea is deferred (see below).
+- [x] UI pass (free app only). Scope is layout and CSS, with no change to scheduling, scoring or standings logic and no colour change (colours, transitions and the premium look are Phase 2).
   - Move the four tabs (Setup, Matches, Board, Finals) into a docked bottom bar that stays on screen while the page scrolls. Hide it while a text field has focus so the phone keyboard never pushes it over the score boxes. Pad the bottom of every screen so the last row is not hidden behind it, and respect the safe-area inset on the installed home-screen app.
   - One consistent pill style for action buttons, at least 44px tall. The "Play to" tiles, stat tiles and inputs are selection tiles and fields, not action buttons, and keep their current shape.
   - Style "Make this my default" as a ghost pill on its own row, with the "Default for new tournaments" note below it. When the selected tie rule already is the default, the button is disabled and reads "Default saved". Keep the `data-tie-ui` test hooks.
   - Generate/Regenerate schedule is full width (about 52px tall) and stays inline at the end of the form, not docked, because regenerating erases entered results. "Back to matches" sits below it as a ghost pill.
   - Add a narrow test that every `<button>` rendered by the app has a `class` attribute, so an unstyled native button cannot slip in again. Update existing tests that assert the old tab position from the written rules, not from the new layout.
   - The owner checks it on a real phone, including typing a score with the keyboard open, before it merges.
-- [ ] Mobile QA on iOS Safari and Android Chrome (last free item; includes the docked tab bar and the keyboard on the installed home-screen app)
+- [x] Mobile QA on iOS Safari and Android Chrome (last free item; includes the docked tab bar and the keyboard on the installed home-screen app)
 
 ### Deferred from free v1 (owner decision 2026-10-18)
 - JSON export/import and undo last score. Reason: a tournament is started and finished in one sitting, per-match Update/Clear already exists, and every destructive action asks first. Revisit only if a pilot session shows a real data-loss or scorer-handover moment. See docs/specs/export-import.md (status: deferred).

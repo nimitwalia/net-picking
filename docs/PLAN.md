@@ -11,7 +11,7 @@
 
 ## Sequence
 0. Foundation: extract core into `packages/core` with tests; Vite + TypeScript for the free app.
-1. Free v1: a rulebook link, a UI pass (docked bottom tab bar, consistent pill buttons) and mobile QA. Byes, named courts and withdrawal moved to Pro; export/import and undo are deferred (decisions 2026-10-18).
+1. Free v1 (DONE 2026-10-23): a rulebook link, a UI pass (docked bottom tab bar, consistent pill buttons) and mobile QA. Byes, named courts and withdrawal moved to Pro; export/import and undo are deferred (decisions 2026-10-18).
 2. Free v1 hardening: real-group pilot for 2-3 sessions, fix what breaks. This runs alongside the start of the Pro build.
 3. Pro alpha: auth + approval + cloud save, your group only.
 4. Pro features, one at a time: byes, named courts and rounds view, player withdrawal, ratings, balanced pairing, Mexicano, stats/awards, live scorer, fee splitter, rules feed.

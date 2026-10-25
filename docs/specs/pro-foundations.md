@@ -17,7 +17,7 @@ Decisions (owner, 2026-10-23):
 - Payments are NOT in this slice. The pricing model (annual plan or per-tournament pass; the owner first thought of a one-time price) is undecided and stays out of the spec. See "Open decisions".
 
 ## Out of scope for this slice
-Payments or billing; byes, courts, withdrawal, ratings, Mexicano or any other Phase 2 feature; the premium redesign (use the free app's look); viewer accounts, chat or comments; import from the free app; Apple or phone sign-in (docs/PLAN.md gate); any change to `apps/free`.
+Payments or billing; byes, courts, withdrawal, ratings, Mexicano or any other Phase 2 feature; padel; fixed teams, brackets and the official-rules mode (see "Later phases"); restyling the four existing tabs (see "UI direction"); viewer accounts, chat or comments; import from the free app; Apple or phone sign-in (docs/PLAN.md gate); any change to `apps/free`.
 
 ## Rules that carry over unchanged
 - All scheduling, scoring and standings logic comes from `packages/core`. Pro must not re-implement any of it. The share page computes standings with core from the stored tournament, so the organiser's screen and the players' screen cannot disagree.
@@ -26,7 +26,7 @@ Payments or billing; byes, courts, withdrawal, ratings, Mexicano or any other Ph
 - No secrets in client code (rule 6). The 360px phone width and the black theme with cream/pastel elements still apply (rule 7).
 
 ## Design (decisions the builder follows; the owner approves them here)
-**Data.** One row per tournament: `id`, `owner_id` (the signed-in user), `state` (the same tournament object the free app saves, as JSON, so core reads it directly), `share_token`, `sharing_enabled`, `version`, `created_at`, `updated_at`. Standings and schedule are not stored; they are computed from `state` by core.
+**Data.** One row per tournament: `id`, `owner_id` (the signed-in user), `state` (the same tournament object the free app saves, as JSON, so core reads it directly), `share_token`, `sharing_enabled`, `version`, `created_at`, `updated_at`, and three columns that the first slice only stores: `sport` (default `pickleball`), `rules_mode` (`house` or `official`, default `house`) and `format` (`rotating` or `fixed_teams`, default `rotating`). Slice 1 builds only pickleball, house rules, rotating partners; the columns exist so later phases need no migration. Standings and schedule are not stored; they are computed from `state` by core.
 
 **Who can do what.**
 - Organiser (signed in): create, read, update and delete only their own tournaments. Enforced by row-level security on the table, not only in the UI.
@@ -41,12 +41,44 @@ Payments or billing; byes, courts, withdrawal, ratings, Mexicano or any other Ph
 
 **Auth.** Google and magic link. The same email address reached either way must land in the same account, not two (verify this against the auth provider's behaviour; do not assume).
 
+## Later phases the design must not block (owner decisions, 2026-10-25)
+None of this is built in slice 1. It is recorded so slice 1 does not close the door.
+
+**Who it is for.** Anyone who pays: clubs running real tournaments, and friends playing among themselves. "Well-run event" is the goal, not USA Pickleball sanctioning. Screens may say "follows the USA Pickleball rulebook", never "sanctioned".
+
+**Rules mode switch: Official or House.** One setting per tournament (`rules_mode`).
+- Official follows only what the 2026 USA Pickleball Official Rulebook provides: fixed teams (Rule 15.A.3), the Rule 15.B formats, win by two (15.C), and the Rule 15.B.4 round-robin tie-breakers. Rule 16.F says a Tournament Director must not impose a rule that is not in the rulebook; the rulebook lists exceptions that have not been reviewed here.
+- House allows the owner's own choices: rotating partners, golden point, +3/-1 scoring, the other differences listed in docs/RULES_SOURCES.md ("House rules" table).
+- Official mode can never offer golden point or rotating partners.
+
+**Fixed teams (`format = fixed_teams`).** The first fixed-team format is a single round robin with the official tie-breakers (15.B.4), then an optional single-elimination playoff for the top teams (15.B.6). Pool play (15.B.5) comes after that. This needs a new scheduler and a new standings module in `packages/core`, with its own tests, behind the same interface as the rotating-partner one. Two-match minimum per player (15.F) except in single elimination without consolation. Pool size, number advancing and seeding are not set by the rulebook: they are the organiser's choices and are labelled as such on screen. Teams are entered by hand, or built from ratings.
+
+**Ratings and balanced teams.** Each player may have an optional rating, typed in by the organiser (with an optional DUPR ID as a label only). Balanced teams: rank by rating, pair the strongest with the weakest, then the second strongest with the second weakest, and so on. This is the app's own method, not an official rule, and is labelled as such. Ratings are visible to the organiser only: never on the share page and never in the public read.
+
+**DUPR.** DUPR has an API, but its terms for third-party apps are not public (the Pickleball Brackets FAQ says each player needs a DUPR ID), and DUPR's club partnership agreement forbids a partner providing DUPR rating or profile data to anyone. So: no scraping of DUPR pages; no DUPR data flow until DUPR gives written access terms. Decision for the owner when the time comes: contact DUPR.
+
+**Padel (`sport = padel`).** FIP Rules of Padel, in force 1 January 2026: https://www.padelfip.com/wp-content/uploads/2025/12/FIP_Rules-of-Padel.pdf. Points in a game are 15, 30, 40, game, with advantage, Star Point or Golden Point as the deciding-point option; a set is first to 6 games by 2 (7-5 or a 7-point tie-break at 6-6); a match is best of three sets, with listed alternatives such as a super tie-break (first to 10, by 2). Played in pairs. The rulebook has nothing on Americano, Mexicano or other rotating-partner formats, so those would be house formats. A padel result is sets and games, not one pair of numbers: core needs a second result shape and its own standings module, and "DIFF" must be defined for padel (games, not points) before building. The rule text must come from the owner (docs/RULES_SOURCES.md access note).
+
+**Shared code stays sport-neutral.** No pickleball-only wording or scoring assumption in shared UI, share page or storage. Rules cards, labels and scoring modules are per sport.
+
+## UI direction (draft, mockups in the owner's design canvas)
+Proposed, owner to confirm: build the share page and the new Pro screens (sign-in, tournament list, share controls) in the new look from the start, and restyle the four existing tabs in a later PR, so no screen is built twice.
+- White ground with one accent. The owner liked a minimalist look; two options were mocked up: sky blue and slate. Not yet chosen.
+- Tokens (colours, fonts, spacing, radii) live in one place so the look can change without a rewrite.
+- Contrast: text at least 4.5:1, control borders at least 3:1. Sky blue #C9DDE6 is for fills only (1.4:1 as text on white). Rank changes use shapes and numbers, never colour alone.
+- Fonts are self-hosted: loading them from a third party would break invariant 9.
+- 44px tap targets, 360px width, a docked bottom bar that hides while a field has focus, motion that respects "reduce motion". Real-device checks remain the only proof.
+
 ## Open decisions (do not build around these)
 1. **Approval gate.** docs/PLAN.md and the Phase 2 roadmap say "sign-up + admin approval". The owner now wants Pro open to anyone who signs up and pays. With no payments in this slice, the gate must be decided: my suggestion is keep approval for the alpha (your group only, per docs/PLAN.md step 3) and open sign-up only when payments ship.
 2. **How the private Pro repo imports `packages/core`.** `@net-picking/core` is private and unpublished (`main` points at `src`). Options: a git dependency, publishing the package, or a submodule. Needs an owner decision; not assumed here.
 3. **Pricing model**, payment provider and tax handling (India). Pre-sell check first: ask 3-5 groups whether they would pay.
 4. **Privacy.** The share page shows players' names to anyone with the link. Decide the retention period, whether organisers can delete a tournament and their account (this spec assumes yes), and check any legal obligations for storing other people's names. I have not verified the law; do not assume.
 5. **Abuse and cost.** The public read route needs a rate limit, and the hosting limits for the chosen plan have not been checked.
+
+6. **Accent colour** (sky blue or slate) and the UI sequencing above.
+7. **DUPR access:** whether to contact DUPR, and when.
+8. **Fixed-team details:** pool size, number advancing, seeding method, and tie-break edge cases the rulebook leaves open.
 
 ## Invariants the tests must check
 1. A signed-in organiser can create, read, update and delete their own tournament, and cannot read or change another organiser's, through the same API the UI uses. Test with two accounts.
@@ -59,6 +91,9 @@ Payments or billing; byes, courts, withdrawal, ratings, Mexicano or any other Ph
 8. Google and magic link with the same email give one account.
 9. No third-party tracker or analytics runs on the share page.
 10. `apps/free` is unchanged: its tests and its saved-tournament key `pickleball_tournament_v1` are untouched.
+
+11. Every tournament row has `sport`, `rules_mode` and `format`, defaulting to `pickleball`, `house` and `rotating`; slice 1 rejects any other value.
+12. The public read returns a fixed list of fields (an allow-list). Ratings, owner details and any field added later are not returned unless the allow-list is changed on purpose.
 
 ## Real-device check (owner, before merge)
 Organiser on one phone, two other phones open the link (iPhone and Android, plus one on mobile data). Enter a score and watch it appear. Turn sharing off and confirm the link dies. Go offline mid-score and confirm nothing is lost on reconnect.

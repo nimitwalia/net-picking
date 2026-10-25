@@ -31,3 +31,8 @@ The ebook is a JavaScript flipbook (FlipHTML5), so agents cannot extract its tex
 | Teams | Fixed teams | Rotating partners |
 | Withdrawal | Withdrawn team's results do not count (15.B.4.a) | Played results stand. See docs/specs/withdrawal.md |
 | Game to 7 | Inclement-weather rally scoring only (15.C.2.d) | Offered as a normal option |
+
+## Padel (Pro, later phase; not built)
+- FIP Rules of Padel, in force from 1 January 2026: https://www.padelfip.com/wp-content/uploads/2025/12/FIP_Rules-of-Padel.pdf
+- Status: read once through a web summary on 2026-10-24, not yet reviewed in full. Before any padel build the owner supplies the rule numbers and text, as for pickleball (see the access note above).
+- Not covered by the rulebook: Americano, Mexicano and other rotating-partner formats. Those would be house formats.

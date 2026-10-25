@@ -63,7 +63,7 @@ None of this is built in slice 1. It is recorded so slice 1 does not close the d
 
 ## UI direction (draft, mockups in the owner's design canvas)
 Proposed, owner to confirm: build the share page and the new Pro screens (sign-in, tournament list, share controls) in the new look from the start, and restyle the four existing tabs in a later PR, so no screen is built twice.
-- White ground with one accent. The owner liked a minimalist look; two options were mocked up: sky blue and slate. Not yet chosen.
+- White ground with one accent. Chosen by the owner on 2026-10-25: slate (action colour #2F3E4D, light slate #D9E0E6 for fills). The sky-blue option was dropped. Slate checks: white on #2F3E4D is 10.95:1, secondary text #55616D on white 6.33:1, control border #7A8794 on white 3.67:1.
 - Tokens (colours, fonts, spacing, radii) live in one place so the look can change without a rewrite.
 - Contrast: text at least 4.5:1, control borders at least 3:1. Sky blue #C9DDE6 is for fills only (1.4:1 as text on white). Rank changes use shapes and numbers, never colour alone.
 - Fonts are self-hosted: loading them from a third party would break invariant 9.
@@ -76,7 +76,7 @@ Proposed, owner to confirm: build the share page and the new Pro screens (sign-i
 4. **Privacy.** The share page shows players' names to anyone with the link. Decide the retention period, whether organisers can delete a tournament and their account (this spec assumes yes), and check any legal obligations for storing other people's names. I have not verified the law; do not assume.
 5. **Abuse and cost.** The public read route needs a rate limit, and the hosting limits for the chosen plan have not been checked.
 
-6. **Accent colour** (sky blue or slate) and the UI sequencing above.
+6. **UI sequencing** (see above). The accent is decided: slate.
 7. **DUPR access:** whether to contact DUPR, and when.
 8. **Fixed-team details:** pool size, number advancing, seeding method, and tie-break edge cases the rulebook leaves open.
 

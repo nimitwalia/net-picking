@@ -33,6 +33,6 @@ The ebook is a JavaScript flipbook (FlipHTML5), so agents cannot extract its tex
 | Game to 7 | Inclement-weather rally scoring only (15.C.2.d) | Offered as a normal option |
 
 ## Padel (Pro, later phase; not built)
-- FIP Rules of Padel, in force from 1 January 2026: https://www.padelfip.com/wp-content/uploads/2025/12/FIP_Rules-of-Padel.pdf
+- Source document: [FIP Rules of Padel](https://www.padelfip.com/wp-content/uploads/2025/12/FIP_Rules-of-Padel.pdf), in force from 1 January 2026. (Written as a link, not as a "- label: URL" line, because apps/free/tests/e2e/rulebook-link.spec.ts parses every such line in this file and expects exactly the two pickleball URLs at the top.)
 - Status: read once through a web summary on 2026-10-24, not yet reviewed in full. Before any padel build the owner supplies the rule numbers and text, as for pickleball (see the access note above).
 - Not covered by the rulebook: Americano, Mexicano and other rotating-partner formats. Those would be house formats.

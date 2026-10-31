@@ -69,12 +69,21 @@ Proposed, owner to confirm: build the share page and the new Pro screens (sign-i
 - Fonts are self-hosted: loading them from a third party would break invariant 9.
 - 44px tap targets, 360px width, a docked bottom bar that hides while a field has focus, motion that respects "reduce motion". Real-device checks remain the only proof.
 
+## Alpha hosting and rollout (owner decisions, 2026-10-31)
+- **Hosting.** Vercel Hobby (free), on the owner's existing personal account, as its own project for the private repo. Supabase free plan, project `net-picking-pro`, region South Asia (Mumbai). A separate Vercel team was checked: Vercel's Create Team dialog offers only Pro Trial or Pro, so a free separate team is not available.
+- **No custom domain for the alpha.** The app uses its `vercel.app` address. The owner will revisit this later.
+- **Consequence, accepted by the owner.** Share links and sign-in redirects use the `vercel.app` address. If the host or address changes (a custom domain, a move to a Vercel Pro team), every link already shared stops working. Alpha users are told this in advance.
+- **Alpha terms.** A small, invited group who know it is a trial run: things may break and data may be reset. Proposed: a one-line notice on the sign-in screen and the share page saying so.
+- **Conditions that make this decision valid.** No payments, no ads, no paid pre-sales through the app. Vercel's fair use guidelines limit Hobby to non-commercial use and define commercial use as any deployment run for anyone's financial gain, including requesting payment from visitors.
+- **Hard gate before the first payment.** (1) Move to a paid Vercel plan. (2) Move Supabase to a paid plan: free projects pause after 7 days of low activity. (3) Decide the custom domain and migrate existing links, or retire them with notice.
+- **Builder rules that keep the later move cheap.** The app's public address comes from one configuration value; no `vercel.app` address is written in code or tests. The share link is built from that value (the production address, never a per-deployment address). Sign-in redirect URLs are allowed in Supabase for that address only. The repo keeps a checklist of required environment variable names (names only, no values) and where each comes from. Secret keys never go in client code or git.
+
 ## Open decisions (do not build around these)
 1. **Approval gate.** docs/PLAN.md and the Phase 2 roadmap say "sign-up + admin approval". The owner now wants Pro open to anyone who signs up and pays. With no payments in this slice, the gate must be decided: my suggestion is keep approval for the alpha (your group only, per docs/PLAN.md step 3) and open sign-up only when payments ship.
 2. **How the private Pro repo imports `packages/core`.** `@net-picking/core` is private and unpublished (`main` points at `src`). Options: a git dependency, publishing the package, or a submodule. Needs an owner decision; not assumed here.
 3. **Pricing model**, payment provider and tax handling (India). Pre-sell check first: ask 3-5 groups whether they would pay.
 4. **Privacy.** The share page shows players' names to anyone with the link. Decide the retention period, whether organisers can delete a tournament and their account (this spec assumes yes), and check any legal obligations for storing other people's names. I have not verified the law; do not assume.
-5. **Abuse and cost.** The public read route needs a rate limit, and the hosting limits for the chosen plan have not been checked.
+5. **Abuse and cost.** The public read route needs a rate limit. Vercel Hobby's published usage guideline is 1,000,000 function invocations a month; Supabase free-plan limits (database size, bandwidth, auth emails) have not been checked.
 
 6. **UI sequencing** (see above). The accent is decided: slate.
 7. **DUPR access:** whether to contact DUPR, and when.
@@ -94,6 +103,7 @@ Proposed, owner to confirm: build the share page and the new Pro screens (sign-i
 
 11. Every tournament row has `sport`, `rules_mode` and `format`, defaulting to `pickleball`, `house` and `rotating`; slice 1 rejects any other value.
 12. The public read returns a fixed list of fields (an allow-list). Ratings, owner details and any field added later are not returned unless the allow-list is changed on purpose.
+13. No source or test file contains a hardcoded `vercel.app` address or any other deployment host. The public address, the share link and the sign-in redirects all come from the one configuration value.
 
 ## Real-device check (owner, before merge)
 Organiser on one phone, two other phones open the link (iPhone and Android, plus one on mobile data). Enter a score and watch it appear. Turn sharing off and confirm the link dies. Go offline mid-score and confirm nothing is lost on reconnect.

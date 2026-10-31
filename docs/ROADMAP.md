@@ -43,6 +43,7 @@ Free v1 is done when the three items below have shipped (owner decision 2026-10-
 - Rulebook PDF stored on the user's device (IndexedDB), with a typed edition label. Reason: heavy for a feature the group may never use; needs a real-device check of how a stored PDF opens on iOS Safari (including the home-screen app) and Android Chrome, and a PDF-rendering library if the native viewer is unusable. Copyright rules in docs/RULES_SOURCES.md still apply: the PDF is never committed, bundled or uploaded. Revisit only if the owner asks.
 
 ## Phase 2: pro (private repo)
+- [ ] First slice (owner decision 2026-10-23): organiser sign-in (Google + email magic link), organiser enters scores, players see schedule and live standings through a read-only share link, no player accounts, clean slate (no import from free). See docs/specs/pro-foundations.md (draft, has open decisions). Payments are not in this slice.
 - [ ] Next.js + Supabase, Google + email sign-in
 - [ ] Pending/approved/rejected profiles, admin approval page, RLS on every table
 - [ ] Import free-version JSON export (only if the free app ever gets an export; deferred, see above)
